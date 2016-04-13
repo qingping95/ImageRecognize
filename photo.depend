@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1460518038 source:f:\acm\program\photo\main.cpp
+1460549359 source:f:\acm\program\photo\main.cpp
 	<assert.h>
 	<math.h>
 	<iomanip>
@@ -23,7 +23,7 @@
 	<iostream>
 	<fstream>
 
-1460518301 f:\acm\program\photo\image_dsu.h
+1460549383 f:\acm\program\photo\image_dsu.h
 	<assert.h>
 	<math.h>
 	<iomanip>

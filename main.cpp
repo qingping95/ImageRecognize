@@ -50,7 +50,7 @@ void Denoise(char *input, char *output)
 
     formatToReal(realData, ImageData, height, lineByte, biBitCount);
 
-    ImageDsu Idsu(height*realWidth);
+    ImageDsu Idsu(height, realWidth);
 
     //导入颜色数据到并查集
     Idsu.importAttr(realData);

@@ -26,23 +26,34 @@ struct ImageDsu
     int *pa;
     int *num;
     int *color;
+    int *Left, *Right, *Up, *Bottom;
     int BACK;
     int FORE;
     ImageDsu(){}
-    ImageDsu(int n)
+    ImageDsu(int height, int width)
     {
-        this -> n = n;
+        this -> height = height;
+        this -> width = width;
+        this -> n = height * width;
         pa = new int[n];
         num = new int[n];
         color = new int[n];
+        Left = new int[n];
+        Right = new int[n];
+        Up = new int[n];
+        Bottom = new int[n];
         for(int i = 0; i < n; i++)
             pa[i] = i, color[i] = 0, num[i] = 1;
     }
     ~ImageDsu()
     {
-        if(pa) delete []pa;
-        if(num) delete []num;
-        if(color) delete []color;
+        if(pa)      delete []pa;
+        if(num)     delete []num;
+        if(color)   delete []color;
+        if(Left)    delete []Left;
+        if(Right)   delete []Right;
+        if(Up)      delete []Up;
+        if(Bottom)  delete []Bottom;
     }
     void importAttr(unsigned char* data)
     {
