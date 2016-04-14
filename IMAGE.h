@@ -85,18 +85,19 @@ void formatToReal(unsigned char* real, unsigned char *ImageData, int n, int m, i
 void realToFormat(unsigned char* format, unsigned char* realData, int n, int m, int biBitCount)
 {
     if(biBitCount > 8) return ;
+    int lineByte = calLineByte(m, biBitCount);
     int num = 8/biBitCount;
     for(int i = 0; i < n; i++)
     {
         for(int j = 0; j < m; j += num)
         {
             int save = 0;
-            for(int k = 0; k < num; k++)
+            for(int k = 0; k < num && j + k < m; k++)
             {
                 save <<= biBitCount;
                 save += realData[i*m+j+k];
             }
-            format[i*((m+num-1)/num)+j/num] = save;
+            format[i*lineByte+j/num] = save;
 //            format[i] = save;
         }
     }
