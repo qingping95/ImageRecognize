@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <set>
 //
 //结束时需要释放pColorTable这个指针的内存
 //
@@ -38,43 +39,52 @@ void runUnite(ImageDsu &dsu, int n, int m, int K = 4)
         }
     }
 }
-void dsuSave(ImageDsu Idsu, int biBitCount, int height, int width, char *output = NULL)
+
+vector<int> getForeground(ImageDsu Idsu, int Fore)
 {
-    //如果output非空，表示存储
-    if(output == NULL) return ;
-
-    int lineByte=((width * biBitCount+7)/8+3)/4*4;//灰度图像有颜色表，且颜色表表项为256
-
-    unsigned char* realData = new unsigned char[Idsu.height*Idsu.width];
-    unsigned char* ImageData = new unsigned char[height*lineByte];
-    //导出分量数据
-    Idsu.exportAttr(realData);
-
-    //转换给ImageData
-    realToFormat(ImageData, realData, Idsu.height, Idsu.width, biBitCount);
-
-    //初始化颜色表
-    if(pColorTable) delete[] pColorTable;
-    pColorTable = new RGBQUAD[2];
-    initColorTable(pColorTable);
-
-    saveBmp(output, ImageData, Idsu.width, Idsu.height, biBitCount, pColorTable);
-    if(realData) delete []realData;
-    if(ImageData) delete []ImageData;
+    vector<int> v;
+    for(int i = 0; i < Idsu.n; i++)
+    {
+        int idx = Idsu.find(i);
+        if(Idsu.color[idx] != Fore) continue;
+        v.push_back(idx);
+    }
+    sort(v.begin(), v.end());
+    v.erase(unique(v.begin(), v.end()), v.end());
+    return v;
+}
+bool uniteCom(ImageDsu Idsu, vector<int> v)
+{
+    bool isUpdate = false;
+    for(int i = 0; i < v.size(); i++)
+    {
+        for(int j = i+1; j < v.size(); j++)
+        {
+            int u = find(v[i]), v = find(v[j]);
+            if(u == v) continue;
+            if(Idsu.check(u, v))
+            {
+                if(Idsu.unite(u, v)) isUpdate = true;
+            }
+        }
+    }
+    return isUpdate;
 }
 int main()
 {
 //    make_bmp(31, 31, 1, "black-white.bmp");
-
+    const int BACK = 0, FORE = 1;
     int height, width, biBitCount;
+    char input[] = "test_shouxie.bmp";
+    char output[] = "after_denoise4.bmp";
+
     unsigned char *ImageData; //图像数据
-    readBmp("test_shouxie.bmp", ImageData, width, height, biBitCount);
+    readBmp(input, ImageData, width, height, biBitCount);
     int lineByte=calLineByte(width, biBitCount);//灰度图像有颜色表，且颜色表表项为256
 
     int realWidth = lineByte*8/biBitCount;
     unsigned char* realData = new unsigned char[height*realWidth];
 
-    //取出图像的信息
     formatToReal(realData, ImageData, height, lineByte, biBitCount);
 
     ImageDsu Idsu(height, realWidth);
@@ -86,12 +96,46 @@ int main()
     runUnite(Idsu, height, realWidth, 4);
 
     //降噪
-    Idsu.denoise(0, 1, 30);
-    dsuSave(Idsu, biBitCount, height, width, "after_noise_now.bmp");
+    Idsu.denoise(BACK, FORE, 30);
+
+    //做合并偏旁部首
+    vector<int> FG = getForeground(Idsu, FORE);
+    int times = 0;
+    while(uniteCom(Idsu, FG)){
+        for(int i = 0; i < FG.size(); i++)
+        {
+            FG[i] = Idsu.find(FG[i]);
+        }
+        sort(FG.begin(), FG.end());
+        FG.erase(unique(FG.begin(), FG.end()), FG.end());
+        times++;
+    }
+    cout<<"迭代次数为："<<times<<endl;
+
+    //save each word
+    for(int i = 0; i < FG.size(); i++)
+    {
+
+    }
+
+    //存储图像
+    //导出分量数据
+    Idsu.exportAttr(realData);
+
+    //转换给ImageData
+    realToFormat(ImageData, realData, height, realWidth, biBitCount);
+
+    //初始化颜色表
+    if(pColorTable) delete[] pColorTable;
+    pColorTable = new RGBQUAD[2];
+    initColorTable(pColorTable);
+
+    saveBmp(output, ImageData, width, height, biBitCount, pColorTable);
 
     //回收内存
     if(pColorTable) delete []pColorTable;
     if(realData) delete []realData;
     if(ImageData) delete []ImageData;
+    //Denoise("test_shouxie.bmp", "after_denoise4.bmp");
     return 0;
 }

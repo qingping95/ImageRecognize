@@ -73,6 +73,24 @@ struct ImageDsu
             data[i] = color[idx];
         }
     }
+    bool isInCom(int x, int y, int v)
+    {
+        if(Left[v] <= x && x <= Right[v] && Bottom[v] <= y && y <= Up[v]) return true;
+        return false;
+    }
+    double Edist(int x1, int y1, int x2, int y2)
+    {
+        return sqrt((x1 - x2)*(x1 - x2)+(y1 - y2)*(y1 - y2));
+    }
+    bool check(int u, int v)
+    {
+        if(u == v) return true;
+        if(isInCom(Left[u], Bottom[u], v) || isInCom(Left[u], Up[u], v) ||isInCom(Right[u], Bottom[u], v) || isInCom(Right[u], Up[u], v)) return true;
+        if(isInCom(Left[v], Bottom[v], u) || isInCom(Left[v], Up[v], u) ||isInCom(Right[v], Bottom[v], u) || isInCom(Right[v], Up[v], u)) return true;
+        double threshold = max(((double)Left[u]+Right[u])/3, ((double)Up[u]+Bottom[u])/3, ((double)Left[v]+Right[v])/3, ((double)Up[v]+Bottom[v])/3);
+        if(Edist((Left[u]+Right[u])/2, (Up[u]+Bottom[u])/2, (Left[v]+Right[v])/2, (Up[v]+Bottom[v])/2) < threshold) return true;;
+        return false;
+    }
     int find(int x)
     {
         return pa[x] == x ? x : pa[x] = find(pa[x]);
