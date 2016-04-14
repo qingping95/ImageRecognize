@@ -38,16 +38,43 @@ void runUnite(ImageDsu &dsu, int n, int m, int K = 4)
         }
     }
 }
-void Denoise(char *input, char *output)
+void dsuSave(ImageDsu Idsu, int biBitCount, int height, int width, char *output = NULL)
 {
+    //如果output非空，表示存储
+    if(output == NULL) return ;
+
+    int lineByte=((width * biBitCount+7)/8+3)/4*4;//灰度图像有颜色表，且颜色表表项为256
+
+    unsigned char* realData = new unsigned char[Idsu.height*Idsu.width];
+    unsigned char* ImageData = new unsigned char[height*lineByte];
+    //导出分量数据
+    Idsu.exportAttr(realData);
+
+    //转换给ImageData
+    realToFormat(ImageData, realData, Idsu.height, Idsu.width, biBitCount);
+
+    //初始化颜色表
+    if(pColorTable) delete[] pColorTable;
+    pColorTable = new RGBQUAD[2];
+    initColorTable(pColorTable);
+
+    saveBmp(output, ImageData, Idsu.width, Idsu.height, biBitCount, pColorTable);
+    if(realData) delete []realData;
+    if(ImageData) delete []ImageData;
+}
+int main()
+{
+//    make_bmp(31, 31, 1, "black-white.bmp");
+
     int height, width, biBitCount;
     unsigned char *ImageData; //图像数据
-    readBmp(input, ImageData, width, height, biBitCount);
+    readBmp("test_shouxie.bmp", ImageData, width, height, biBitCount);
     int lineByte=calLineByte(width, biBitCount);//灰度图像有颜色表，且颜色表表项为256
 
     int realWidth = lineByte*8/biBitCount;
     unsigned char* realData = new unsigned char[height*realWidth];
 
+    //取出图像的信息
     formatToReal(realData, ImageData, height, lineByte, biBitCount);
 
     ImageDsu Idsu(height, realWidth);
@@ -60,28 +87,11 @@ void Denoise(char *input, char *output)
 
     //降噪
     Idsu.denoise(0, 1, 30);
-
-    //导出分量数据
-    Idsu.exportAttr(realData);
-
-    //转换给ImageData
-    realToFormat(ImageData, realData, height, realWidth, biBitCount);
-
-    //初始化颜色表
-    if(pColorTable) delete[] pColorTable;
-    pColorTable = new RGBQUAD[2];
-    initColorTable(pColorTable);
-
-    saveBmp(output, ImageData, width, height, biBitCount, pColorTable);
+    dsuSave(Idsu, biBitCount, height, width, "after_noise_now.bmp");
 
     //回收内存
     if(pColorTable) delete []pColorTable;
     if(realData) delete []realData;
     if(ImageData) delete []ImageData;
-}
-int main()
-{
-//    make_bmp(31, 31, 1, "black-white.bmp");
-    Denoise("test_shouxie.bmp", "after_denoise4.bmp");
     return 0;
 }

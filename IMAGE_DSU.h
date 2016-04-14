@@ -43,7 +43,12 @@ struct ImageDsu
         Up = new int[n];
         Bottom = new int[n];
         for(int i = 0; i < n; i++)
+        {
             pa[i] = i, color[i] = 0, num[i] = 1;
+            int x = i/width, y = i%width;
+            Left[i] = Right[i] = x;
+            Up[i] = Bottom[i] = y;
+        }
     }
     ~ImageDsu()
     {
@@ -78,6 +83,10 @@ struct ImageDsu
         if(u == v || color[u] != color[v]) return false;
         pa[u] = v;
         num[v] += num[u];
+        Left[v] = min(Left[u], Left[v]);
+        Right[v] = max(Left[u], Left[v]);
+        Up[v] = max(Up[v], Up[u]);
+        Bottom[v] = min(Bottom[v], Bottom[u]);
         return true;
     }
     void denoise(int BACK, int FORE, int threshold)
