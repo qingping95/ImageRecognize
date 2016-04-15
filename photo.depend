@@ -1,18 +1,20 @@
 # depslib dependency file v1.0
-1460614906 source:f:\acm\program\photo\main.cpp
+1460715211 source:f:\acm\program\photo\main.cpp
 	<assert.h>
 	<math.h>
 	<iomanip>
 	<stdlib.h>
 	<windows.h>
+	<algorithm>
 	<stdio.h>
 	<stdlib.h>
 	<iostream>
 	<fstream>
+	<set>
 	"IMAGE.h"
 	"IMAGE_DSU.h"
 
-1460468608 f:\acm\program\photo\image.h
+1460623058 f:\acm\program\photo\image.h
 	<assert.h>
 	<math.h>
 	<iomanip>
@@ -23,7 +25,7 @@
 	<iostream>
 	<fstream>
 
-1460614990 f:\acm\program\photo\image_dsu.h
+1460623135 f:\acm\program\photo\image_dsu.h
 	<assert.h>
 	<math.h>
 	<iomanip>
