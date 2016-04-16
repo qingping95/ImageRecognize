@@ -18,7 +18,7 @@
 using namespace std;
 #define CHECK(x, y) ((x) >= 0 && (x) < n && (y) >= 0 && (y) < m)
 #define ID(x, y) ((x)*m+(y))
-
+#define DEBUG(x) cout<<#x<<" -> "<<x<<endl
 //K=2 十字相连
 //K=4 星型相连(default)
 void runUnite(ImageDsu &dsu, int n, int m, int K = 4)
@@ -41,9 +41,10 @@ void runUnite(ImageDsu &dsu, int n, int m, int K = 4)
     }
 }
 
-vector<int> getForeground(ImageDsu Idsu, int Fore)
+vector<int> getForeground(ImageDsu &Idsu, int Fore)
 {
     vector<int> v;
+    //cout<<Idsu.n<<endl;
     for(int i = 0; i < Idsu.n; i++)
     {
         int idx = Idsu.find(i);
@@ -54,14 +55,14 @@ vector<int> getForeground(ImageDsu Idsu, int Fore)
     v.erase(unique(v.begin(), v.end()), v.end());
     return v;
 }
-bool uniteCom(ImageDsu Idsu, vector<int> v)
+bool uniteCom(ImageDsu &Idsu, vector<int> v)
 {
     bool isUpdate = false;
     for(int i = 0; i < v.size(); i++)
     {
         for(int j = i+1; j < v.size(); j++)
         {
-            cout<<"i : "<<v[i]<<", j : "<<v[j]<<endl;
+            //cout<<"i : "<<v[i]<<", j : "<<v[j]<<endl;
             int U = Idsu.find(v[i]), V = Idsu.find(v[j]);
             if(U == V) continue;
             if(Idsu.check(U, V))
@@ -77,6 +78,7 @@ int main()
 //    char *outputPath =new char[111];
 //    strcpy(outputPath, "After-cur/");
 //    sprintf(outputPath+strlen(outputPath), "%d", 111);
+//    strcat(outputPath, ".bmp");
 //    cout<<outputPath<<endl;
 
 //    make_bmp(31, 31, 1, "black-white.bmp");
@@ -135,7 +137,7 @@ int main()
     initColorTable(pColorTable);
 
     char *outputPath = new char[111];
-    strcpy(outputPath, "After-cur/");
+    strcpy(outputPath, "After-cut3/");
     int len = strlen(outputPath);
     for(int i = 0; i < FG.size(); i++)
     {
@@ -144,6 +146,7 @@ int main()
         Idsu.exportCom(FG[i], comData, th, tw);
         realToFormat(ImageData, comData, th, tw, biBitCount);
         sprintf(outputPath+len, "%d", FG[i]);
+        strcat(outputPath, ".bmp");
         cout<<"Image save in : "<<outputPath<<endl;
 
         saveBmp(outputPath, ImageData, tw, th, biBitCount, pColorTable);
@@ -152,13 +155,13 @@ int main()
     }
     //存储图像
     //导出分量数据
-    Idsu.exportAttr(realData);
-
-    //转换给ImageData
-    realToFormat(ImageData, realData, height, realWidth, biBitCount);
-
-
-    saveBmp(output, ImageData, width, height, biBitCount, pColorTable);
+//    Idsu.exportAttr(realData);
+//
+//    //转换给ImageData
+//    realToFormat(ImageData, realData, height, realWidth, biBitCount);
+//
+//
+//    saveBmp(output, ImageData, width, height, biBitCount, pColorTable);
 
     //回收内存
     if(outputPath) delete []outputPath;

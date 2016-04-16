@@ -11,6 +11,8 @@
 #include <iostream>
 #include <fstream>
 using namespace std;
+
+#define DEBUG(x) cout<<#x<<" -> "<<x<<endl
 /*
 * n     -> 像素数
 * pa    -> 分量的id
@@ -46,8 +48,8 @@ struct ImageDsu
         {
             pa[i] = i, color[i] = 0, num[i] = 1;
             int x = i/width, y = i%width;
-            Left[i] = Right[i] = x;
-            Up[i] = Bottom[i] = y;
+            Left[i] = Right[i] = y;
+            Up[i] = Bottom[i] = x;
         }
     }
     ~ImageDsu()
@@ -75,9 +77,15 @@ struct ImageDsu
     }
     void exportCom(int u, unsigned char* &data, int &th, int &tw)
     {
-        if(data) delete []data;
+//        if(data)
+//            delete []data;
         u = find(u);
-        th = Up[u] - Bottom[u]; tw = Right[u] - Left[u];
+        th = Up[u] - Bottom[u]+1; tw = Right[u] - Left[u]+1;
+//        DEBUG(Bottom[u]);
+//        DEBUG(Up[u]);
+//        DEBUG(Left[u]);
+//        DEBUG(Right[u]);
+
         data = new unsigned char[th * tw];
         for(int i = 0; i < th; i++)
             for(int j = 0; j < tw; j++)
@@ -93,16 +101,18 @@ struct ImageDsu
     }
     double Edist(int x1, int y1, int x2, int y2)
     {
-        return sqrt((x1 - x2)*(x1 - x2)+(y1 - y2)*(y1 - y2));
+        return sqrt((double)(x1 - x2)*(x1 - x2)+(y1 - y2)*(y1 - y2));
     }
     #define MAX4(a, b, c, d) max(a, max(b, max(c, d)))
+    #define MIN4(a, b, c, d) min(a, min(b, min(c, d)))
     bool check(int u, int v)
     {
         if(u == v) return true;
         if(isInCom(Left[u], Bottom[u], v) || isInCom(Left[u], Up[u], v) ||isInCom(Right[u], Bottom[u], v) || isInCom(Right[u], Up[u], v)) return true;
         if(isInCom(Left[v], Bottom[v], u) || isInCom(Left[v], Up[v], u) ||isInCom(Right[v], Bottom[v], u) || isInCom(Right[v], Up[v], u)) return true;
-        double threshold = MAX4(((double)Left[u]+Right[u])/3, ((double)Up[u]+Bottom[u])/3, ((double)Left[v]+Right[v])/3, ((double)Up[v]+Bottom[v])/3);
-        if(Edist((Left[u]+Right[u])/2, (Up[u]+Bottom[u])/2, (Left[v]+Right[v])/2, (Up[v]+Bottom[v])/2) < threshold) return true;;
+        int n = 2, nn = n+1;
+        double threshold = MAX4(((double)Right[u]-Left[u])*n/nn, ((double)Up[u]-Bottom[u])*n/nn, ((double)Right[v]-Left[v])*n/nn, ((double)Up[v]-Bottom[v])*n/nn);
+        if(Edist((Left[u]+Right[u])/2, (Up[u]+Bottom[u])/2, (Left[v]+Right[v])/2, (Up[v]+Bottom[v])/2) < threshold) return true;
         return false;
     }
     int find(int x)
@@ -116,7 +126,7 @@ struct ImageDsu
         pa[u] = v;
         num[v] += num[u];
         Left[v] = min(Left[u], Left[v]);
-        Right[v] = max(Left[u], Left[v]);
+        Right[v] = max(Right[u], Right[v]);
         Up[v] = max(Up[v], Up[u]);
         Bottom[v] = min(Bottom[v], Bottom[u]);
         return true;
