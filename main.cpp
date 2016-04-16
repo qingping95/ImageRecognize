@@ -41,7 +41,7 @@ void runUnite(ImageDsu &dsu, int n, int m, int K = 4)
     }
 }
 
-vector<int> getForeground(ImageDsu &Idsu, int Fore)
+vector<int> getForeground(ImageDsu &Idsu, int Fore, int &mah, int &maw)
 {
     vector<int> v;
     //cout<<Idsu.n<<endl;
@@ -50,12 +50,14 @@ vector<int> getForeground(ImageDsu &Idsu, int Fore)
         int idx = Idsu.find(i);
         if(Idsu.color[idx] != Fore) continue;
         v.push_back(idx);
+        mah = max(mah, Idsu.getHeight(idx));
+        maw = max(maw, Idsu.getWidth(idx));
     }
     sort(v.begin(), v.end());
     v.erase(unique(v.begin(), v.end()), v.end());
     return v;
 }
-bool uniteCom(ImageDsu &Idsu, vector<int> v)
+bool uniteCom(ImageDsu &Idsu, vector<int> v, int &mah, int &maw)
 {
     bool isUpdate = false;
     for(int i = 0; i < v.size(); i++)
@@ -65,9 +67,13 @@ bool uniteCom(ImageDsu &Idsu, vector<int> v)
             //cout<<"i : "<<v[i]<<", j : "<<v[j]<<endl;
             int U = Idsu.find(v[i]), V = Idsu.find(v[j]);
             if(U == V) continue;
-            if(Idsu.check(U, V))
+            if(Idsu.check(U, V, mah, maw))
             {
                 if(Idsu.unite(U, V)) isUpdate = true;
+                int th = Idsu.getHeight(Idsu.find(U));
+                int tw = Idsu.getWidth(Idsu.find(U));
+                if(mah < th) isUpdate = true, mah = th;
+                if(maw < tw) isUpdate = true, maw = tw;
             }
         }
     }
@@ -106,12 +112,17 @@ int main()
     runUnite(Idsu, height, realWidth, 4);
 
     //降噪
-    Idsu.denoise(BACK, FORE, 30);
+    Idsu.denoise(BACK, FORE, width, 30);
 
     //做合并偏旁部首
-    vector<int> FG = getForeground(Idsu, FORE);
+    int mah = 0, maw = 0;
+    vector<int> FG = getForeground(Idsu, FORE, mah, maw);
+
+    DEBUG(mah);
+    DEBUG(maw);
+
     int times = 0;
-    while(uniteCom(Idsu, FG)){
+    while(uniteCom(Idsu, FG, mah, maw)){
         //clear useless index
         for(int i = 0; i < FG.size(); i++)
         {
@@ -122,6 +133,8 @@ int main()
         times++;
     }
     cout<<"迭代次数为："<<times<<endl;
+    DEBUG(mah);
+    DEBUG(maw);
 
     for(int i = 0; i < FG.size(); i++)
     {
@@ -137,7 +150,7 @@ int main()
     initColorTable(pColorTable);
 
     char *outputPath = new char[111];
-    strcpy(outputPath, "After-cut3/");
+    strcpy(outputPath, "After-cut-size1/");
     int len = strlen(outputPath);
     for(int i = 0; i < FG.size(); i++)
     {

@@ -62,6 +62,14 @@ struct ImageDsu
         if(Up)      delete []Up;
         if(Bottom)  delete []Bottom;
     }
+    int getHeight(int idx)
+    {
+        return Up[idx] - Bottom[idx]+1;
+    }
+    int getWidth(int idx)
+    {
+        return Right[idx] - Left[idx]+1;
+    }
     void importAttr(unsigned char* data)
     {
         for(int i = 0; i < n; i++)
@@ -105,14 +113,27 @@ struct ImageDsu
     }
     #define MAX4(a, b, c, d) max(a, max(b, max(c, d)))
     #define MIN4(a, b, c, d) min(a, min(b, min(c, d)))
-    bool check(int u, int v)
+    bool check(int u, int v, int mah, int maw)
     {
         if(u == v) return true;
+
+        //check two component whether intersected
         if(isInCom(Left[u], Bottom[u], v) || isInCom(Left[u], Up[u], v) ||isInCom(Right[u], Bottom[u], v) || isInCom(Right[u], Up[u], v)) return true;
         if(isInCom(Left[v], Bottom[v], u) || isInCom(Left[v], Up[v], u) ||isInCom(Right[v], Bottom[v], u) || isInCom(Right[v], Up[v], u)) return true;
+
+        //check the distance between two component
         int n = 2, nn = n+1;
         double threshold = MAX4(((double)Right[u]-Left[u])*n/nn, ((double)Up[u]-Bottom[u])*n/nn, ((double)Right[v]-Left[v])*n/nn, ((double)Up[v]-Bottom[v])*n/nn);
         if(Edist((Left[u]+Right[u])/2, (Up[u]+Bottom[u])/2, (Left[v]+Right[v])/2, (Up[v]+Bottom[v])/2) < threshold) return true;
+
+        //check the size of word
+        int ll= min(Left[u], Left[v]);
+        int rr = max(Right[u], Right[v]);
+        int uu = max(Up[v], Up[u]);
+        int bb = min(Bottom[v], Bottom[u]);
+        if(uu - bb + 1 <= mah && rr - ll + 1 <= maw)
+            return true;
+
         return false;
     }
     int find(int x)
@@ -131,7 +152,7 @@ struct ImageDsu
         Bottom[v] = min(Bottom[v], Bottom[u]);
         return true;
     }
-    void denoise(int BACK, int FORE, int threshold)
+    void denoise(int BACK, int FORE, int WIDTH, int threshold)
     {
         bool *vis = new bool[n];
         memset(vis, 0, sizeof(bool)*n);
@@ -142,6 +163,7 @@ struct ImageDsu
             vis[u] = 1;
             if(color[u] == BACK) continue;
             if(num[u] < threshold) color[u] = BACK;
+            if(Right[u] >= WIDTH) color[u] = BACK;
         }
         delete []vis;
     }
