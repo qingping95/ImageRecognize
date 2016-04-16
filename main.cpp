@@ -49,6 +49,7 @@ vector<int> getForeground(ImageDsu &Idsu, int Fore, int &mah, int &maw)
     {
         int idx = Idsu.find(i);
         if(Idsu.color[idx] != Fore) continue;
+        if(v.size() == 0) Idsu.printCom(idx);
         v.push_back(idx);
         mah = max(mah, Idsu.getHeight(idx));
         maw = max(maw, Idsu.getWidth(idx));
@@ -57,7 +58,7 @@ vector<int> getForeground(ImageDsu &Idsu, int Fore, int &mah, int &maw)
     v.erase(unique(v.begin(), v.end()), v.end());
     return v;
 }
-bool uniteCom(ImageDsu &Idsu, vector<int> v, int &mah, int &maw)
+bool uniteCom(ImageDsu &Idsu, vector<int> v, int &mah, int &maw, bool use)
 {
     bool isUpdate = false;
     for(int i = 0; i < v.size(); i++)
@@ -67,13 +68,16 @@ bool uniteCom(ImageDsu &Idsu, vector<int> v, int &mah, int &maw)
             //cout<<"i : "<<v[i]<<", j : "<<v[j]<<endl;
             int U = Idsu.find(v[i]), V = Idsu.find(v[j]);
             if(U == V) continue;
-            if(Idsu.check(U, V, mah, maw))
+            if(Idsu.check(U, V, mah, maw, use))
             {
+                printf("%d -> %d\n", U, V);
+                Idsu.printCom(U);
+                Idsu.printCom(V);
                 if(Idsu.unite(U, V)) isUpdate = true;
-//                int th = Idsu.getHeight(Idsu.find(U));
-//                if(mah < th) isUpdate = true, mah = th;
-//                int tw = Idsu.getWidth(Idsu.find(U));
-//                if(maw < tw) isUpdate = true, maw = tw;
+                int th = Idsu.getHeight(Idsu.find(U));
+                if(mah < th) isUpdate = true, mah = th;
+                int tw = Idsu.getWidth(Idsu.find(U));
+                if(maw < tw) isUpdate = true, maw = tw;
             }
         }
     }
@@ -89,13 +93,13 @@ int main()
 //    cout<<outputPath<<endl;
 
 //    make_bmp(31, 31, 1, "black-white.bmp");
-
+    freopen("outinfo.txt", "w", stdout);
     int BACK = 0, FORE = 1;
     int height, width, biBitCount;
-    char input[] = "bit-shufa.bmp";
-    char output[] = "denoise-shufa-bit.bmp";
+    char input[] = "bit-biaoge.bmp";
+    char output[] = "denoise-biaoge-bit.bmp";
     char *outputPath = new char[111];
-    strcpy(outputPath, "shufa/After-cut2/");
+    strcpy(outputPath, "biaoge/After-cut-final/");
 
     unsigned char *ImageData; //图像数据
     readBmp(input, ImageData, width, height, biBitCount, BACK, FORE);
@@ -132,13 +136,19 @@ int main()
     DEBUG(maw);
 
     int times = 0;
-    while(uniteCom(Idsu, FG, mah, maw)){
+    bool use = false;
+    while(true){
+        if(!uniteCom(Idsu, FG, mah, maw, use))
+        {
+            if(use == false) use = true;
+            else break;
+        }
         //clear useless index
         for(int i = 0; i < FG.size(); i++)
         {
             FG[i] = Idsu.find(FG[i]);
-//            mah = max(mah, Idsu.getHeight(FG[i]));
-//            maw = max(maw, Idsu.getWidth(FG[i]));
+            mah = max(mah, Idsu.getHeight(FG[i]));
+            maw = max(maw, Idsu.getWidth(FG[i]));
         }
         sort(FG.begin(), FG.end());
         FG.erase(unique(FG.begin(), FG.end()), FG.end());
@@ -186,7 +196,6 @@ int main()
 //
 //    //转换给ImageData
 //    realToFormat(ImageData, realData, height, realWidth, biBitCount);
-//
 //
 //    saveBmp(output, ImageData, width, height, biBitCount, pColorTable);
 

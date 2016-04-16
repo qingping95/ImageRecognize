@@ -64,10 +64,12 @@ struct ImageDsu
     }
     int getHeight(int idx)
     {
+        idx = find(idx);
         return Up[idx] - Bottom[idx]+1;
     }
     int getWidth(int idx)
     {
+        idx = find(idx);
         return Right[idx] - Left[idx]+1;
     }
     void importAttr(unsigned char* data)
@@ -113,8 +115,9 @@ struct ImageDsu
     }
     #define MAX4(a, b, c, d) max(a, max(b, max(c, d)))
     #define MIN4(a, b, c, d) min(a, min(b, min(c, d)))
-    bool check(int u, int v, int mah, int maw)
+    bool check(int u, int v, int mah, int maw, bool use)
     {
+        u = find(u), v = find(v);
         if(u == v) return true;
 
         //check two component whether intersected
@@ -134,22 +137,24 @@ struct ImageDsu
         int rr = max(Right[u], Right[v]);
         int uu = max(Up[v], Up[u]);
         int bb = min(Bottom[v], Bottom[u]);
-//
+
+        /*--------------------------------------this is a cut line---------------------------------------------------------------*/
+        //there are code of unite all disconnected and correlative component, run it after unite all connective component
+        if(!use) return false;
         //Vertical merger
-//        if(uu - bb + 1 <= mah && rr - ll + 1 <= Right[u]-Left[u]+Right[v]-Left[v])
-//            return true;
+        if(uu - bb + 1 <= mah && rr - ll + 1 <= Right[u]-Left[u]+Right[v]-Left[v])
+            return true;
 //
 //        int base = Up[u]-Bottom[u]+Up[v]-Bottom[v];
-        int tmp = find(638636);
-        if(tmp == u || tmp == v)
-            tmp = u;
         if(rr - ll <= maw && uu - bb <= mah)
             return true;
         //Horizontal merger
-//        int base = max(Up[u]-Bottom[u], Up[v]-Bottom[v]);
-//        double error = base*1.0/5;
-//        if(rr - ll + 1 <= maw && uu - bb <= base+error)
-//            return true;
+        int base = max(Up[u]-Bottom[u], Up[v]-Bottom[v]);
+        double error = base*1.0/5;
+        if(rr - ll + 1 <= maw && uu - bb <= base+error)
+            return true;
+        //int base = max(Up[u]-Bottom[u], Up[v]-Bottom[v]);
+        //double error = base*1.0/5;
         return false;
     }
     int find(int x)
@@ -184,6 +189,20 @@ struct ImageDsu
             if(Up[u] - Bottom[u] >= height / 3) color[u] = BACK;
         }
         delete []vis;
+    }
+    void printCom(int idx)
+    {
+        printf("\n");
+        idx = find(idx);
+        for(int i = Up[idx]; i >= Bottom[idx]; i--)
+        {
+            for(int j = Left[idx]; j <= Right[idx]; j++)
+            {
+                printf("%c", ".#"[color[i*width+j]]);
+            }
+            printf("\n");
+        }
+        printf("\n");
     }
 };
 
