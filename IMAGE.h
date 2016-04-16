@@ -12,6 +12,7 @@
 
 using namespace std;
 
+#define DEBUG(x) cout<<#x<<" -> "<<x<<endl
 
 RGBQUAD *pColorTable;//颜色表指针
 
@@ -21,7 +22,7 @@ int calLineByte(int width, int biBitCount)
 }
 //-------------------------------------------------------------------------------------------
 //读图像的位图数据、宽、高、颜色表及每像素位数等数据进内存，存放在相应的全局变量中
-bool readBmp(char *bmpName, unsigned char* &ImageData, int& bmpWidth, int& bmpHeight, int& biBitCount)
+bool readBmp(char *bmpName, unsigned char* &ImageData, int& bmpWidth, int& bmpHeight, int& biBitCount, int &BACK, int &FORE)
 {
     FILE *fp=fopen(bmpName,"rb");//二进制读方式打开指定的图像文件
 
@@ -38,12 +39,13 @@ bool readBmp(char *bmpName, unsigned char* &ImageData, int& bmpWidth, int& bmpHe
     bmpWidth = bmphead.biWidth;
     bmpHeight = bmphead.biHeight;
     biBitCount = bmphead.biBitCount;//定义变量，计算图像每行像素所占的字节数（必须是4的倍数）
-    int biClrUsed = bmphead.biClrUsed;
+//    int biClrUsed = bmphead.biClrUsed;
 
     //输出图像的信息
 
     cout<<"width = "<<bmpWidth<<" height = "<<bmpHeight<<" biBitCount = "<<biBitCount<<endl;
-
+    DEBUG(bmphead.biSizeImage);
+    DEBUG(bmphead.biCompression);
     int lineByte=((bmpWidth * biBitCount+7)/8+3)/4*4;//灰度图像有颜色表，且颜色表表项为256
     if(bmphead.biClrUsed != 0)
     {
@@ -54,7 +56,14 @@ bool readBmp(char *bmpName, unsigned char* &ImageData, int& bmpWidth, int& bmpHe
         pColorTable = new RGBQUAD[1<<biBitCount];
         fread(pColorTable,sizeof(RGBQUAD),1<<biBitCount, fp);
     }
-
+    if(pColorTable[0].rgbBlue == 255) BACK = 0, FORE = 1;
+    else BACK = 1, FORE = 0;
+    DEBUG((int)pColorTable[0].rgbBlue);
+    DEBUG((int)pColorTable[0].rgbGreen);
+    DEBUG((int)pColorTable[0].rgbRed);
+    DEBUG((int)pColorTable[1].rgbBlue);
+    DEBUG((int)pColorTable[1].rgbGreen);
+    DEBUG((int)pColorTable[1].rgbRed);
     //申请位图数据所需要的空间，读位图数据进内存
     ImageData = new unsigned char[bmpHeight*lineByte];
     fread(ImageData, 1, bmpHeight*lineByte, fp);
@@ -62,7 +71,28 @@ bool readBmp(char *bmpName, unsigned char* &ImageData, int& bmpWidth, int& bmpHe
     fclose(fp);//关闭文件
     return 1;//读取文件成功
 }
+bool read32bmp(char *bmpName, unsigned char* &ImageData, int& bmpWidth, int &bmpHeight, int &biBitCount)
+{
+    FILE *fp = fopen(bmpName, "rb");
+    if(fp == 0) return 0;
+    fseek(fp, sizeof(BITMAPFILEHEADER), 0);
 
+    BITMAPINFOHEADER bmphead;
+    fread(&bmphead, sizeof(BITMAPINFOHEADER), 1, fp);
+     bmpWidth = bmphead.biWidth;
+    bmpHeight = bmphead.biHeight;
+    biBitCount = bmphead.biBitCount;//定义变量，计算图像每行像素所占的字节数（必须是4的倍数）
+
+    //输出图像的信息
+    cout<<"width = "<<bmpWidth<<" height = "<<bmpHeight<<" biBitCount = "<<biBitCount<<endl;
+
+    int lineByte = ((bmpWidth * biBitCount)/8+3)/4*4;
+    ImageData = new unsigned char[bmpHeight*lineByte];
+    fread(ImageData, 1, bmpHeight*lineByte, fp);
+
+    fclose(fp);
+    return true;
+}
 void formatToReal(unsigned char* real, unsigned char *ImageData, int n, int m, int biBitCount)
 {
     if(biBitCount > 8) return ;
@@ -184,9 +214,9 @@ void make_bmp(int width, int height, int biBitCount, char* outputPath)
         for(int j = 0; j < lineByte/4; j++) pBmpBuf[i*lineByte+j] = 255*(!(i&1));
     }
 
-    if(pColorTable) delete[] pColorTable;
-    pColorTable = new RGBQUAD[2];
-    initColorTable(pColorTable);
+//    if(pColorTable) delete[] pColorTable;
+//    pColorTable = new RGBQUAD[2];
+//    initColorTable(pColorTable);
 
     //存储图片
     saveBmp(outputPath, pBmpBuf, width, height, biBitCount, pColorTable);

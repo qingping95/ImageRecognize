@@ -118,29 +118,38 @@ struct ImageDsu
         if(u == v) return true;
 
         //check two component whether intersected
-        if(isInCom(Left[u], Bottom[u], v) || isInCom(Left[u], Up[u], v) ||isInCom(Right[u], Bottom[u], v) || isInCom(Right[u], Up[u], v)) return true;
-        if(isInCom(Left[v], Bottom[v], u) || isInCom(Left[v], Up[v], u) ||isInCom(Right[v], Bottom[v], u) || isInCom(Right[v], Up[v], u)) return true;
+        if(isInCom(Left[u], Bottom[u], v) || isInCom(Left[u], Up[u], v) ||isInCom(Right[u], Bottom[u], v) || isInCom(Right[u], Up[u], v))
+            return true;
+        if(isInCom(Left[v], Bottom[v], u) || isInCom(Left[v], Up[v], u) ||isInCom(Right[v], Bottom[v], u) || isInCom(Right[v], Up[v], u))
+            return true;
 
         //check the distance between two component
         int n = 2, nn = n+1;
         double threshold = MAX4(((double)Right[u]-Left[u])*n/nn, ((double)Up[u]-Bottom[u])*n/nn, ((double)Right[v]-Left[v])*n/nn, ((double)Up[v]-Bottom[v])*n/nn);
-        if(Edist((Left[u]+Right[u])/2, (Up[u]+Bottom[u])/2, (Left[v]+Right[v])/2, (Up[v]+Bottom[v])/2) < threshold) return true;
+        if(Edist((Left[u]+Right[u])/2, (Up[u]+Bottom[u])/2, (Left[v]+Right[v])/2, (Up[v]+Bottom[v])/2) < threshold)
+            return true;
 
-        //check the size of word
-        int ll= min(Left[u], Left[v]);
+//        //check the size of word
+        int ll = min(Left[u], Left[v]);
         int rr = max(Right[u], Right[v]);
         int uu = max(Up[v], Up[u]);
         int bb = min(Bottom[v], Bottom[u]);
-
+//
         //Vertical merger
-        if(uu - bb + 1 <= mah && rr - ll + 1 <= Right[u]-Left[u]+Right[v]-Left[v])
+//        if(uu - bb + 1 <= mah && rr - ll + 1 <= Right[u]-Left[u]+Right[v]-Left[v])
+//            return true;
+//
+//        int base = Up[u]-Bottom[u]+Up[v]-Bottom[v];
+        int tmp = find(638636);
+        if(tmp == u || tmp == v)
+            tmp = u;
+        if(rr - ll <= maw && uu - bb <= mah)
             return true;
-
         //Horizontal merger
-        int base = max(Up[u]-Bottom[u], Up[v]-Bottom[v]);
-        double error = base*1.0/5;
-        if(rr - ll + 1 <= maw && uu - bb <= base+error)
-            return true;
+//        int base = max(Up[u]-Bottom[u], Up[v]-Bottom[v]);
+//        double error = base*1.0/5;
+//        if(rr - ll + 1 <= maw && uu - bb <= base+error)
+//            return true;
         return false;
     }
     int find(int x)
@@ -171,6 +180,8 @@ struct ImageDsu
             if(color[u] == BACK) continue;
             if(num[u] < threshold) color[u] = BACK;
             if(Right[u] >= WIDTH) color[u] = BACK;
+            if(Right[u] - Left[u] >= width / 3) color[u] = BACK;
+            if(Up[u] - Bottom[u] >= height / 3) color[u] = BACK;
         }
         delete []vis;
     }
