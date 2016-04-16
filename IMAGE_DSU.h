@@ -131,9 +131,16 @@ struct ImageDsu
         int rr = max(Right[u], Right[v]);
         int uu = max(Up[v], Up[u]);
         int bb = min(Bottom[v], Bottom[u]);
-        if(uu - bb + 1 <= mah && rr - ll + 1 <= maw)
+
+        //Vertical merger
+        if(uu - bb + 1 <= mah && rr - ll + 1 <= Right[u]-Left[u]+Right[v]-Left[v])
             return true;
 
+        //Horizontal merger
+        int base = max(Up[u]-Bottom[u], Up[v]-Bottom[v]);
+        double error = base*1.0/5;
+        if(rr - ll + 1 <= maw && uu - bb <= base+error)
+            return true;
         return false;
     }
     int find(int x)

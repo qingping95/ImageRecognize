@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <stdlib.h>
 #include <windows.h>
+#include <imagehlp.h>
 #include <algorithm>
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,7 +58,7 @@ vector<int> getForeground(ImageDsu &Idsu, int Fore, int &mah, int &maw)
     v.erase(unique(v.begin(), v.end()), v.end());
     return v;
 }
-bool uniteCom(ImageDsu &Idsu, vector<int> v, int &mah, int &maw)
+bool uniteCom(ImageDsu &Idsu, vector<int> v, int &mah, int maw)
 {
     bool isUpdate = false;
     for(int i = 0; i < v.size(); i++)
@@ -71,13 +72,86 @@ bool uniteCom(ImageDsu &Idsu, vector<int> v, int &mah, int &maw)
             {
                 if(Idsu.unite(U, V)) isUpdate = true;
                 int th = Idsu.getHeight(Idsu.find(U));
-                int tw = Idsu.getWidth(Idsu.find(U));
                 if(mah < th) isUpdate = true, mah = th;
-                if(maw < tw) isUpdate = true, maw = tw;
+//                int tw = Idsu.getWidth(Idsu.find(U));
+                //if(maw < tw) isUpdate = true, maw = tw;
             }
         }
     }
     return isUpdate;
+}
+void Bmp32ToBmp24(char Filename[])
+{
+    char Filename2[] = "output.bmp";
+
+
+//注意：如果没有LR_CREATEDIBSECTION，位图颜色将被映射到屏幕DC颜色
+//也就是说，如果屏幕是16位颜色，则所有的图像都将映射到16位颜色
+    HBITMAP hbmp32 = (HBITMAP) LoadImage(NULL, Filename,
+                                         IMAGE_BITMAP, 0, 0,
+                                         LR_LOADFROMFILE |
+                                         LR_CREATEDIBSECTION);
+
+
+    BITMAP bmp;//获取位图信息
+    GetObject(hbmp32, sizeof(BITMAP), &bmp);
+
+
+    printf("Image Bit Depth : %dnWidth : %d , Height : %d n",
+           bmp.bmBitsPixel, bmp.bmWidth, bmp.bmHeight);//显示位图颜色模式和图像宽高
+
+
+//计算24位图像每行的字节数
+    int BytesPerLine = 3 * bmp.bmWidth;
+    while(BytesPerLine % 4 != 0)
+        BytesPerLine ++;
+
+
+    BITMAPINFOHEADER bih = {0};//位图信息头
+    bih.biBitCount = 24;//每个像素字节大小
+    bih.biCompression = BI_RGB;
+    bih.biHeight = bmp.bmHeight;//高度
+    bih.biPlanes = 1;
+    bih.biSize = sizeof(BITMAPINFOHEADER);
+    bih.biSizeImage = BytesPerLine * bmp.bmHeight;//图像数据大小
+    bih.biWidth = bmp.bmWidth;//宽度
+
+    BITMAPFILEHEADER bfh = {0};//位图文件头
+    bfh.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);//到位图数据的偏移量
+    bfh.bfSize = bfh.bfOffBits + bih.biSizeImage;//文件总的大小
+    bfh.bfType = (WORD)0x4d42;
+
+    FILE *fp = fopen(Filename2, "w+b");
+
+    fwrite(&bfh, 1, sizeof(BITMAPFILEHEADER), fp);//写入位图文件头
+
+    fwrite(&bih, 1, sizeof(BITMAPINFOHEADER), fp);//写入位图信息头
+
+    byte * p = new byte[bih.biSizeImage];
+
+//获取当前32位图像数据
+    GetDIBits(GetDC(NULL), hbmp32, 0, bmp.bmHeight, p, (LPBITMAPINFO)&bih, DIB_RGB_COLORS);
+
+
+//只取rgb值，存入文件
+    byte b = 0;//用于填充
+    for(int i = 0 ; i < bmp.bmWidth * bmp.bmHeight ; i ++)
+    {
+        //32位位图图像的格式为：Blue, Green, Red, Alpha
+        fwrite(&(p[i * 3]), 1, 3, fp);
+        if(i % bmp.bmWidth == bmp.bmWidth - 1)//填充字节
+        {
+            for(int k = 0 ; k < (BytesPerLine - bmp.bmWidth * 3) ; k ++)
+                fwrite(&b, sizeof(byte), 1, fp);
+        }
+    }
+
+    delete [] p;
+
+    fclose(fp);
+
+
+    DeleteObject(hbmp32);
 }
 int main()
 {
@@ -122,11 +196,14 @@ int main()
     DEBUG(maw);
 
     int times = 0;
-    while(uniteCom(Idsu, FG, mah, maw)){
+    while(uniteCom(Idsu, FG, mah, maw))
+    {
         //clear useless index
         for(int i = 0; i < FG.size(); i++)
         {
             FG[i] = Idsu.find(FG[i]);
+            mah = max(mah, Idsu.getHeight(FG[i]));
+            maw = max(maw, Idsu.getWidth(FG[i]));
         }
         sort(FG.begin(), FG.end());
         FG.erase(unique(FG.begin(), FG.end()), FG.end());
@@ -150,7 +227,7 @@ int main()
     initColorTable(pColorTable);
 
     char *outputPath = new char[111];
-    strcpy(outputPath, "After-cut-size1/");
+    strcpy(outputPath, "After-cut-size4/");
     int len = strlen(outputPath);
     for(int i = 0; i < FG.size(); i++)
     {
