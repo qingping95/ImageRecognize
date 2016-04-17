@@ -75,9 +75,9 @@ bool uniteCom(ImageDsu &Idsu, vector<int> v, int &mah, int &maw, bool use)
             if(U == V) continue;
             if(Idsu.check(U, V, mah, maw, use))
             {
-                printf("%d -> %d\n", U, V);
-                Idsu.printCom(U);
-                Idsu.printCom(V);
+//                printf("%d -> %d\n", U, V);
+//                Idsu.printCom(U);
+//                Idsu.printCom(V);
                 if(Idsu.unite(U, V)) isUpdate = true;
                 int th = Idsu.getHeight(Idsu.find(U));
                 if(mah < th) isUpdate = true, mah = th;
@@ -89,30 +89,40 @@ bool uniteCom(ImageDsu &Idsu, vector<int> v, int &mah, int &maw, bool use)
     return isUpdate;
 }
 
-void runOCR()
+bool runOCR()
 {
     //    //OCR
-    printf("正在执行OCR文字识别...\n");
+    printf("OCR process...\n");
     char fileName[] = "result";
     vector<string> files;
     getFiles(fileName, files);
-    char unicodeOutput[] = "U_output";
-    for(string file:files)
+    int len = files.size();
+    int idx = 0;
+    for(string file : files)
     {
         string oldName = file;
         DEBUG(oldName);
+        string info = oldName;
+        info.insert(info.find('\\'), "txt");
+        DEBUG(info);
+        char unicodeOutput[222];
+        strcpy(unicodeOutput, info.c_str());
         OCRAPI(oldName.c_str(), unicodeOutput);
         string uni = getUnicode(unicodeOutput)+".bmp";
         string newName = file.replace(file.rfind('\\')+1, file.length(), uni.c_str());
         DEBUG(newName);
-        //rename(olds.c_str(), news.c_str());
+        rename(oldName.c_str(), newName.c_str());
+        printf("%d / %d\n", ++idx, files.size());
     }
-    return 0;
+    return true;
 }
 int main()
 {
-
-
+    //runOCR
+    if(runOCR()) return 0;
+//    char O[222] = "F:\\result";
+//    cout<<getUnicode(O)<<endl;
+//    return 0;
     //freopen("outinfo.txt", "w", stdout);
     int BACK = 0, FORE = 1;
     int height, width, biBitCount;

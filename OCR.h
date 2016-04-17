@@ -55,7 +55,7 @@ string getUnicode(char *file)
 //    }
     string str;
     stringstream ss;
-    ss << cc[0];
+    ss << hex << cc[0];
     ss >> str;
     file[len] = '\0';
     return str;
