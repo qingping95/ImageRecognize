@@ -89,34 +89,29 @@ bool uniteCom(ImageDsu &Idsu, vector<int> v, int &mah, int &maw, bool use)
     return isUpdate;
 }
 
-
+void runOCR()
+{
+    //    //OCR
+    printf("正在执行OCR文字识别...\n");
+    char fileName[] = "result";
+    vector<string> files;
+    getFiles(fileName, files);
+    char unicodeOutput[] = "U_output";
+    for(string file:files)
+    {
+        string oldName = file;
+        DEBUG(oldName);
+        OCRAPI(oldName.c_str(), unicodeOutput);
+        string uni = getUnicode(unicodeOutput)+".bmp";
+        string newName = file.replace(file.rfind('\\')+1, file.length(), uni.c_str());
+        DEBUG(newName);
+        //rename(olds.c_str(), news.c_str());
+    }
+    return 0;
+}
 int main()
 {
-//    //OCR
-//    char fileName[] = "result";
-//    vector<string> files;
-//    getFiles(fileName, files);
-//    char unicodeOutput[] = "U_output";
-//    for(string file:files)
-//    {
-//        string olds = file;
-//        olds.append()
-//        OCRAPI(olds.c_str(), unicodeOutput);
-//        cout<<getUnicode(unicodeOutput)<<endl;
-//        //string news = file.replace(file.rfind('\\')+1, file.length(), "XXXXXX.bmp");
-//        //rename(olds.c_str(), news.c_str());
-//
-//
-////        cout<<file.length()<<endl;
-////        cout<<file<<endl;
-////        cout<<file.replace(file.rfind('\\')+1, file.length(), "XXXXXX.bmp")<<endl;
-////        cout<<file<<endl;
-//    }
 
-    char result[] = "F:/result";
-    //OCRAPI(fileName, result);
-    getUnicode(result);
-    return 0;
 
     //freopen("outinfo.txt", "w", stdout);
     int BACK = 0, FORE = 1;

@@ -18,12 +18,11 @@
 #include <sstream>
 
 
-void OCRAPI(char *fileName, char *result)
+void OCRAPI(const char *fileName, char *result)
 {
     string str = string(fileName)+" ";
     str += result;
     str += " -l chi_sim -psm 8";
-    printf("正在执行OCR文字识别...\n");
     printf("%s\n", str.c_str());
 //    cout<<str<<endl;
     SHELLEXECUTEINFO ShExecInfo = {0};
@@ -43,6 +42,7 @@ void OCRAPI(char *fileName, char *result)
 
 string getUnicode(char *file)
 {
+    int len = strlen(file);
     strcat(file, ".txt");
     freopen(file, "r", stdin);
 
@@ -57,6 +57,7 @@ string getUnicode(char *file)
     stringstream ss;
     ss << cc[0];
     ss >> str;
+    file[len] = '\0';
     return str;
     //wprintf(L"%s\n", cc);
 }
