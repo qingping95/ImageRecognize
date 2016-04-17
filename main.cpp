@@ -9,6 +9,7 @@
 #include <iostream>
 #include <fstream>
 #include <set>
+#include <shellapi.h>
 //
 //结束时需要释放pColorTable这个指针的内存
 //
@@ -83,10 +84,46 @@ bool uniteCom(ImageDsu &Idsu, vector<int> v, int &mah, int &maw, bool use)
     }
     return isUpdate;
 }
-
+void OCRAPI(char *fileName, char *result)
+{
+    string str = string(fileName)+" ";
+    str += result;
+    str += " -l chi_sim -psm 8";
+    printf("正在执行OCR文字识别...\n");
+    printf("%s\n", str.c_str());
+//    cout<<str<<endl;
+    SHELLEXECUTEINFO ShExecInfo = {0};
+    ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+    ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+    ShExecInfo.hwnd = NULL;
+    ShExecInfo.lpVerb = NULL;
+    ShExecInfo.lpFile = "C:/Program Files (x86)/Tesseract-OCR/tesseract.exe";
+    ShExecInfo.lpParameters = str.c_str();
+    //ShExecInfo.lpParameters = "F:/506622.bmp F:/result -l chi_sim -psm 8";
+    ShExecInfo.lpDirectory = NULL;
+    ShExecInfo.nShow = SW_SHOW;
+    ShExecInfo.hInstApp = NULL;
+    ShellExecuteEx(&ShExecInfo);
+    WaitForSingleObject(ShExecInfo.hProcess,INFINITE);
+}
+void printfile(char *file)
+{
+    strcat(file, ".txt");
+    freopen(file, "r", stdin);
+    char str[111];
+    while(~scanf("%s", str))
+    {
+        printf("%s\n", str);
+    }
+}
 int main()
 {
-    freopen("outinfo.txt", "w", stdout);
+    char fileName[] = "F:/1356423756_8982.jpg";
+    char result[] = "F:/result";
+    OCRAPI(fileName, result);
+    printfile(result);
+    return 0;
+    //freopen("outinfo.txt", "w", stdout);
     int BACK = 0, FORE = 1;
     int height, width, biBitCount;
     char input[] = "bit-biaoge.bmp";
