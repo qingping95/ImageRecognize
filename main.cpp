@@ -190,15 +190,6 @@ int main()
         if(comData) delete[]comData;
     }
 
-    //存储图像
-    //导出分量数据
-//    Idsu.exportAttr(realData);
-//
-//    //转换给ImageData
-//    realToFormat(ImageData, realData, height, realWidth, biBitCount);
-//
-//    saveBmp(output, ImageData, width, height, biBitCount, pColorTable);
-
     //回收内存
     if(outputPath) delete []outputPath;
     if(pColorTable) delete []pColorTable;
