@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <algorithm>
 #include <stdio.h>
+#include <locale>
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
@@ -106,21 +107,76 @@ void OCRAPI(char *fileName, char *result)
     ShellExecuteEx(&ShExecInfo);
     WaitForSingleObject(ShExecInfo.hProcess,INFINITE);
 }
+std::string ws2s(const std::wstring& ws)
+{
+    std::string curLocale = setlocale(LC_ALL, NULL); // curLocale = "C";
+    setlocale(LC_ALL, "chs");
+    const wchar_t* _Source = ws.c_str();
+    size_t _Dsize = 2 * ws.size() + 1;
+    char *_Dest = new char[_Dsize];
+    memset(_Dest,0,_Dsize);
+    wcstombs(_Dest,_Source,_Dsize);
+    std::string result = _Dest;
+    delete []_Dest;
+    setlocale(LC_ALL, curLocale.c_str());
+    return result;
+}
+bool WStringToString(const std::wstring &wstr,std::string &str)
+{
+    int nLen = (int)wstr.length();
+    str.resize(nLen,' ');
+
+    int nResult = WideCharToMultiByte(CP_ACP,0,(LPCWSTR)wstr.c_str(),nLen,(LPSTR)str.c_str(),nLen,NULL,NULL);
+
+    if (nResult == 0)
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+std::wstring s2ws(const std::string& s)
+{
+    setlocale(LC_ALL, "chs");
+    const char* _Source = s.c_str();
+    size_t _Dsize = s.size() + 1;
+    wchar_t *_Dest = new wchar_t[_Dsize];
+    wmemset(_Dest, 0, _Dsize);
+    mbstowcs(_Dest,_Source,_Dsize);
+    std::wstring result = _Dest;
+    delete []_Dest;
+    setlocale(LC_ALL, "C");
+    return result;
+}
 void printfile(char *file)
 {
     strcat(file, ".txt");
     freopen(file, "r", stdin);
-    char str[111];
-    while(~scanf("%s", str))
-    {
-        printf("%s\n", str);
-    }
+
+    setlocale(LC_ALL,"chs");
+    wchar_t cc[222];
+    wscanf(L"%s", cc);
+    int len = wcslen(cc);
+//        cout<<len<<endl;
+    for(int i = 0; i < len; i++)
+        wprintf(L"%c: %hx\n",cc[i],cc[i]);
+
+    wprintf(L"%s\n", cc);
+
+    string str;
+    wstring wscc = cc;
+    wcout<<"wstring :"<<wscc<<endl;
+    wprintf(L"wchar: %s\n", wscc.c_str());
+    WStringToString(wscc, str);
+
+    cout<<"asdf"<<endl;
+    cout<<str<<endl;
 }
 int main()
 {
-    char fileName[] = "F:/1356423756_8982.jpg";
+    char fileName[] = "F:/506622.bmp";
     char result[] = "F:/result";
-    OCRAPI(fileName, result);
+    //OCRAPI(fileName, result);
     printfile(result);
     return 0;
     //freopen("outinfo.txt", "w", stdout);
@@ -167,7 +223,8 @@ int main()
 
     int times = 0;
     bool use = false;
-    while(true){
+    while(true)
+    {
         if(!uniteCom(Idsu, FG, mah, maw, use))
         {
             if(use == false) use = true;
