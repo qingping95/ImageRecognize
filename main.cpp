@@ -11,10 +11,13 @@
 #include <fstream>
 #include <set>
 #include <shellapi.h>
+#include <string>
+#include <sstream>
 //
 //结束时需要释放pColorTable这个指针的内存
 //
 #include "IMAGE.h"
+#include "OCR.h"
 //
 #include "IMAGE_DSU.h"
 using namespace std;
@@ -85,100 +88,36 @@ bool uniteCom(ImageDsu &Idsu, vector<int> v, int &mah, int &maw, bool use)
     }
     return isUpdate;
 }
-void OCRAPI(char *fileName, char *result)
-{
-    string str = string(fileName)+" ";
-    str += result;
-    str += " -l chi_sim -psm 8";
-    printf("正在执行OCR文字识别...\n");
-    printf("%s\n", str.c_str());
-//    cout<<str<<endl;
-    SHELLEXECUTEINFO ShExecInfo = {0};
-    ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
-    ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-    ShExecInfo.hwnd = NULL;
-    ShExecInfo.lpVerb = NULL;
-    ShExecInfo.lpFile = "C:/Program Files (x86)/Tesseract-OCR/tesseract.exe";
-    ShExecInfo.lpParameters = str.c_str();
-    //ShExecInfo.lpParameters = "F:/506622.bmp F:/result -l chi_sim -psm 8";
-    ShExecInfo.lpDirectory = NULL;
-    ShExecInfo.nShow = SW_SHOW;
-    ShExecInfo.hInstApp = NULL;
-    ShellExecuteEx(&ShExecInfo);
-    WaitForSingleObject(ShExecInfo.hProcess,INFINITE);
-}
-std::string ws2s(const std::wstring& ws)
-{
-    std::string curLocale = setlocale(LC_ALL, NULL); // curLocale = "C";
-    setlocale(LC_ALL, "chs");
-    const wchar_t* _Source = ws.c_str();
-    size_t _Dsize = 2 * ws.size() + 1;
-    char *_Dest = new char[_Dsize];
-    memset(_Dest,0,_Dsize);
-    wcstombs(_Dest,_Source,_Dsize);
-    std::string result = _Dest;
-    delete []_Dest;
-    setlocale(LC_ALL, curLocale.c_str());
-    return result;
-}
-bool WStringToString(const std::wstring &wstr,std::string &str)
-{
-    int nLen = (int)wstr.length();
-    str.resize(nLen,' ');
 
-    int nResult = WideCharToMultiByte(CP_ACP,0,(LPCWSTR)wstr.c_str(),nLen,(LPSTR)str.c_str(),nLen,NULL,NULL);
 
-    if (nResult == 0)
-    {
-        return FALSE;
-    }
-
-    return TRUE;
-}
-std::wstring s2ws(const std::string& s)
-{
-    setlocale(LC_ALL, "chs");
-    const char* _Source = s.c_str();
-    size_t _Dsize = s.size() + 1;
-    wchar_t *_Dest = new wchar_t[_Dsize];
-    wmemset(_Dest, 0, _Dsize);
-    mbstowcs(_Dest,_Source,_Dsize);
-    std::wstring result = _Dest;
-    delete []_Dest;
-    setlocale(LC_ALL, "C");
-    return result;
-}
-void printfile(char *file)
-{
-    strcat(file, ".txt");
-    freopen(file, "r", stdin);
-
-    setlocale(LC_ALL,"chs");
-    wchar_t cc[222];
-    wscanf(L"%s", cc);
-    int len = wcslen(cc);
-//        cout<<len<<endl;
-    for(int i = 0; i < len; i++)
-        wprintf(L"%c: %hx\n",cc[i],cc[i]);
-
-    wprintf(L"%s\n", cc);
-
-    string str;
-    wstring wscc = cc;
-    wcout<<"wstring :"<<wscc<<endl;
-    wprintf(L"wchar: %s\n", wscc.c_str());
-    WStringToString(wscc, str);
-
-    cout<<"asdf"<<endl;
-    cout<<str<<endl;
-}
 int main()
 {
-    char fileName[] = "F:/506622.bmp";
+//    //OCR
+//    char fileName[] = "result";
+//    vector<string> files;
+//    getFiles(fileName, files);
+//    char unicodeOutput[] = "U_output";
+//    for(string file:files)
+//    {
+//        string olds = file;
+//        olds.append()
+//        OCRAPI(olds.c_str(), unicodeOutput);
+//        cout<<getUnicode(unicodeOutput)<<endl;
+//        //string news = file.replace(file.rfind('\\')+1, file.length(), "XXXXXX.bmp");
+//        //rename(olds.c_str(), news.c_str());
+//
+//
+////        cout<<file.length()<<endl;
+////        cout<<file<<endl;
+////        cout<<file.replace(file.rfind('\\')+1, file.length(), "XXXXXX.bmp")<<endl;
+////        cout<<file<<endl;
+//    }
+
     char result[] = "F:/result";
     //OCRAPI(fileName, result);
-    printfile(result);
+    getUnicode(result);
     return 0;
+
     //freopen("outinfo.txt", "w", stdout);
     int BACK = 0, FORE = 1;
     int height, width, biBitCount;
@@ -284,5 +223,8 @@ int main()
     if(pColorTable) delete []pColorTable;
     if(realData) delete []realData;
     if(ImageData) delete []ImageData;
+
+
+
     return 0;
 }
