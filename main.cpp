@@ -86,13 +86,6 @@ bool uniteCom(ImageDsu &Idsu, vector<int> v, int &mah, int &maw, bool use)
 
 int main()
 {
-//    char *outputPath =new char[111];
-//    strcpy(outputPath, "After-cur/");
-//    sprintf(outputPath+strlen(outputPath), "%d", 111);
-//    strcat(outputPath, ".bmp");
-//    cout<<outputPath<<endl;
-
-//    make_bmp(31, 31, 1, "black-white.bmp");
     freopen("outinfo.txt", "w", stdout);
     int BACK = 0, FORE = 1;
     int height, width, biBitCount;
@@ -173,6 +166,8 @@ int main()
 //    if(pColorTable) delete[] pColorTable;
 //    pColorTable = new RGBQUAD[2];
 //    initColorTable(pColorTable);
+
+
 
     int len = strlen(outputPath);
     for(int i = 0; i < FG.size(); i++)
