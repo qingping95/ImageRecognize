@@ -195,6 +195,5 @@ int main()
     if(pColorTable) delete []pColorTable;
     if(realData) delete []realData;
     if(ImageData) delete []ImageData;
-    //Denoise("test_shouxie.bmp", "after_denoise4.bmp");
     return 0;
 }
