@@ -54,7 +54,7 @@ vector<int> getForeground(ImageDsu &Idsu, int Fore, int &mah, int &maw)
     {
         int idx = Idsu.find(i);
         if(Idsu.color[idx] != Fore) continue;
-        if(v.size() == 0) Idsu.printCom(idx);
+        //if(v.size() == 0) Idsu.printCom(idx);
         v.push_back(idx);
         mah = max(mah, Idsu.getHeight(idx));
         maw = max(maw, Idsu.getWidth(idx));
@@ -119,17 +119,17 @@ bool runOCR()
 int main()
 {
     //runOCR
-    if(runOCR()) return 0;
+    //if(runOCR()) return 0;
 //    char O[222] = "F:\\result";
 //    cout<<getUnicode(O)<<endl;
 //    return 0;
     //freopen("outinfo.txt", "w", stdout);
     int BACK = 0, FORE = 1;
     int height, width, biBitCount;
-    char input[] = "bit-biaoge.bmp";
-    char output[] = "denoise-biaoge-bit.bmp";
+    char input[] = "bit-shufa.bmp";
+    char output[] = "denoise-shufa-bit.bmp";
     char *outputPath = new char[111];
-    strcpy(outputPath, "biaoge/After-cut-final/");
+    strcpy(outputPath, "shufa/After-cut-final/");
 
     unsigned char *ImageData; //Í¼ÏñÊý¾Ý
     readBmp(input, ImageData, width, height, biBitCount, BACK, FORE);
@@ -210,6 +210,8 @@ int main()
     int len = strlen(outputPath);
     for(int i = 0; i < FG.size(); i++)
     {
+        //if(Idsu.find(FG[i]) != 1131212) continue;
+        //Idsu.printCom(Idsu.find(FG[i]));
         int th, tw;
         unsigned char* comData;
         Idsu.exportCom(FG[i], comData, th, tw);

@@ -122,10 +122,14 @@ void realToFormat(unsigned char* format, unsigned char* realData, int n, int m, 
         for(int j = 0; j < m; j += num)
         {
             int save = 0;
-            for(int k = 0; k < num && j + k < m; k++)
+            for(int k = 0; k < num; k++)
             {
                 save <<= biBitCount;
-                save += realData[i*m+j+k];
+                //if there are some data, then save it
+                if(j + k < m)
+                {
+                    save += realData[i*m+j+k];
+                }
             }
             format[i*lineByte+j/num] = save;
 //            format[i] = save;

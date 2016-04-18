@@ -34,6 +34,7 @@
 		</Compiler>
 		<Unit filename="IMAGE_DSU.h" />
 		<Unit filename="Image.h" />
+		<Unit filename="OCR.h" />
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<code_completion />
