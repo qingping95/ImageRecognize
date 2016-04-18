@@ -126,10 +126,10 @@ int main()
     //freopen("outinfo.txt", "w", stdout);
     int BACK = 0, FORE = 1;
     int height, width, biBitCount;
-    char input[] = "bit-shufa.bmp";
-    char output[] = "denoise-shufa-bit.bmp";
+    char input[] = "bit-random.bmp";
+    char output[] = "denoise-random-bit.bmp";
     char *outputPath = new char[111];
-    strcpy(outputPath, "shufa/After-cut-final/");
+    strcpy(outputPath, "random/After-cut-final/");
 
     unsigned char *ImageData; //Í¼ÏñÊý¾Ý
     readBmp(input, ImageData, width, height, biBitCount, BACK, FORE);
