@@ -120,7 +120,8 @@ void binaryzation()
 {
     int height, width, biBitCount;
     char input[] = "gray-test.bmp";
-    char output[] = "denoise-random-gray.bmp";
+    char outputGray[] = "denoise-random-gray.bmp";
+    char outputBit[] = "denoise-random-bit.bmp";
     char *outputPath = new char[111];
     strcpy(outputPath, "random/After-cut-final/");
 
@@ -138,17 +139,24 @@ void binaryzation()
     if(biBitCount == 24) rgb2gray(gray, ImageData, height, width);
 
     realToFormat(ImageData, gray, height, lineByte8, 8);
-
 //    if(pColorTable) delete []pColorTable;
     pColorTable = new RGBQUAD[256];
     for(int i = 0; i < 256; i++)
         pColorTable[i] = (RGBQUAD){i, i, i, 0};
-    saveBmp(output, ImageData, width, height, 8, pColorTable);
+    saveBmp(outputGray, ImageData, width, height, 8, pColorTable);
+
+    int lineByte2 = calLineByte(width, 1);
+    unsigned char *bmp = new unsigned char[height*lineByte8];
+    OTSU(bmp, gray, height, lineByte8);
+    realToFormat(ImageData, bmp, height, lineByte8, 1);
+    pColorTable[1] = pColorTable[255];
+    saveBmp(outputBit, ImageData, width, height, 1, pColorTable);
 
     delete []pColorTable;
     delete []outputPath;
     delete []ImageData;
     delete []gray;
+    delete []bmp;
 }
 int main()
 {

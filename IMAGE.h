@@ -60,13 +60,7 @@ bool readBmp(char *bmpName, unsigned char* &ImageData, int& bmpWidth, int& bmpHe
     }
     if(biBitCount != 24 && pColorTable[0].rgbBlue == 255) BACK = 0, FORE = 1;
     else BACK = 1, FORE = 0;
-//    DEBUG((int)pColorTable[0].rgbBlue);
-//    DEBUG((int)pColorTable[0].rgbGreen);
-//    DEBUG((int)pColorTable[0].rgbRed);
-//    DEBUG((int)pColorTable[1].rgbBlue);
-//    DEBUG((int)pColorTable[1].rgbGreen);
-//    DEBUG((int)pColorTable[1].rgbRed);
-    //申请位图数据所需要的空间，读位图数据进内存
+
     ImageData = new unsigned char[bmpHeight*lineByte];
     fread(ImageData, 1, bmpHeight*lineByte, fp);
 
@@ -138,13 +132,13 @@ void OTSU(unsigned char *bit, unsigned char* gray, int n, int m)
     int ansT = 0;
     for(int i = 0; i < 256; i++)
     {
-        double w1 = W1 / (n*m);
+        double w1 = (double)W1 / (n*m);
         double u1 = 0;
-        if(W1) u1 = U1 / W1;
+        if(W1) u1 = (double)U1 / W1;
 
-        double w2 = W2 / (n*m);
+        double w2 = (double)W2 / (n*m);
         double u2 = 0;
-        if(W2) u2 = U2 / W2;
+        if(W2) u2 = (double)U2 / W2;
 
         double curG = w1*D(u1 - averU)+w2*D(u2-averU);
         if(curG > ansG + 1e-8)
