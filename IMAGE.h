@@ -47,16 +47,18 @@ bool readBmp(char *bmpName, unsigned char* &ImageData, int& bmpWidth, int& bmpHe
     DEBUG(bmphead.biSizeImage);
     DEBUG(bmphead.biCompression);
     int lineByte=((bmpWidth * biBitCount+7)/8+3)/4*4;//灰度图像有颜色表，且颜色表表项为256
-    if(bmphead.biClrUsed != 0)
-    {
-        //申请颜色表所需要的空间，读颜色表进内存
-        pColorTable = new RGBQUAD[bmphead.biClrUsed];
-        fread(pColorTable,sizeof(RGBQUAD),bmphead.biClrUsed, fp);
-    }else {
-        pColorTable = new RGBQUAD[1<<biBitCount];
-        fread(pColorTable,sizeof(RGBQUAD),1<<biBitCount, fp);
+    if(biBitCount < 24){
+        if(bmphead.biClrUsed != 0)
+        {
+            //申请颜色表所需要的空间，读颜色表进内存
+            pColorTable = new RGBQUAD[bmphead.biClrUsed];
+            fread(pColorTable,sizeof(RGBQUAD),bmphead.biClrUsed, fp);
+        }else {
+            pColorTable = new RGBQUAD[1<<biBitCount];
+            fread(pColorTable,sizeof(RGBQUAD),1<<biBitCount, fp);
+        }
     }
-    if(pColorTable[0].rgbBlue == 255) BACK = 0, FORE = 1;
+    if(biBitCount != 24 && pColorTable[0].rgbBlue == 255) BACK = 0, FORE = 1;
     else BACK = 1, FORE = 0;
 //    DEBUG((int)pColorTable[0].rgbBlue);
 //    DEBUG((int)pColorTable[0].rgbGreen);
@@ -67,6 +69,11 @@ bool readBmp(char *bmpName, unsigned char* &ImageData, int& bmpWidth, int& bmpHe
     //申请位图数据所需要的空间，读位图数据进内存
     ImageData = new unsigned char[bmpHeight*lineByte];
     fread(ImageData, 1, bmpHeight*lineByte, fp);
+
+    int num = 0;
+    for(int i = 0; i < bmpHeight*lineByte; i++)
+        if(ImageData[i]) num++;
+    DEBUG(num);
 
     fclose(fp);//关闭文件
     return 1;//读取文件成功

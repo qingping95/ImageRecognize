@@ -143,7 +143,7 @@ void binaryzation()
     pColorTable = new RGBQUAD[256];
     for(int i = 0; i < 256; i++)
         pColorTable[i] = (RGBQUAD){i, i, i, 0};
-    //saveBmp(output, ImageData, width, height, 8, pColorTable);
+    saveBmp(output, ImageData, width, height, 8, pColorTable);
 
     delete []pColorTable;
     delete []outputPath;
