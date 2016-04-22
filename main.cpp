@@ -116,6 +116,18 @@ bool runOCR()
     }
     return true;
 }
+void binaryzation()
+{
+    int height, width, biBitCount;
+    char input[] = "bit-random.bmp";
+    char output[] = "denoise-random-bit.bmp";
+    char *outputPath = new char[111];
+    strcpy(outputPath, "random/After-cut-final/");
+
+    unsigned char *ImageData; //Í¼ÏñÊý¾Ý
+    readBmp(input, ImageData, width, height, biBitCount, BACK, FORE);
+
+}
 int main()
 {
     //runOCR

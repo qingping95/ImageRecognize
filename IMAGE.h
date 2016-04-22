@@ -58,12 +58,12 @@ bool readBmp(char *bmpName, unsigned char* &ImageData, int& bmpWidth, int& bmpHe
     }
     if(pColorTable[0].rgbBlue == 255) BACK = 0, FORE = 1;
     else BACK = 1, FORE = 0;
-    DEBUG((int)pColorTable[0].rgbBlue);
-    DEBUG((int)pColorTable[0].rgbGreen);
-    DEBUG((int)pColorTable[0].rgbRed);
-    DEBUG((int)pColorTable[1].rgbBlue);
-    DEBUG((int)pColorTable[1].rgbGreen);
-    DEBUG((int)pColorTable[1].rgbRed);
+//    DEBUG((int)pColorTable[0].rgbBlue);
+//    DEBUG((int)pColorTable[0].rgbGreen);
+//    DEBUG((int)pColorTable[0].rgbRed);
+//    DEBUG((int)pColorTable[1].rgbBlue);
+//    DEBUG((int)pColorTable[1].rgbGreen);
+//    DEBUG((int)pColorTable[1].rgbRed);
     //申请位图数据所需要的空间，读位图数据进内存
     ImageData = new unsigned char[bmpHeight*lineByte];
     fread(ImageData, 1, bmpHeight*lineByte, fp);
@@ -92,6 +92,71 @@ bool read32bmp(char *bmpName, unsigned char* &ImageData, int& bmpWidth, int &bmp
 
     fclose(fp);
     return true;
+}
+void rgb2gray(unsigned char *gray, unsigned char* rgb, int n, int m)
+{
+    int biBitCount = 24;
+    for(int i = 0; i < n; i++)
+    {
+        for(int j = 0; j < m; j++)
+        {
+            int B = rgb[i*m+j*3];
+            int G = rgb[i*m+j*3+1];
+            int R = rgb[i*m+j*3+2];
+            gray[i][j] = 0.229*R + 0.587*G + 0.114*B;
+        }
+    }
+}
+#define D(x) ((x)*(x))
+void OTSU(unsigned char *bit, unsigned char* gray, int n, int m)
+{
+    int *num = new int[256];
+    memset(num, 0, sizeof(int)*256);
+    for(int i = 0; i < n; i++)
+        for(int j = 0; j < m; j++)
+            num[gray[i*m+j]]++;
+
+    //计算平均灰度值
+    double averU = 0;
+    for(int i = 0; i < 256; i++)
+        averU += i * num[i];
+    averU /= n*m;
+
+    int W1 = 0, W2 = 0, U1 = 0, U2 = 0;
+    for(int i = 0 ; i < 256; i++)
+        W1 += num[i], U1 += i * num[i];
+
+    double andG = -0x3f3f3f3f
+    int ansT = 0;
+    for(int i = 0; i < 256; i++)
+    {
+        double w1 = W1 / (n*m);
+        double u1 = 0
+        if(W1) u1 = U1 / W1;
+
+        double w2 = W2 / (n*m);
+        double u2 = 0;
+        if(W2) u2 = U2 / W2;
+
+        double curG = w1*D(u1 - averu)+w2*D(u2-u);
+        if(curG > G + 1e-8)
+        {
+            G = curG;
+            ansT = i;
+        }
+        //更新W1, W2, U1, U2
+        W1 -= num[i];
+        W2 += num[i];
+        U1 -= i*num[i];
+        U2 += i*num[i];
+    }
+
+    for(int i = 0; i < n; i++)
+        for(int j = 0; j < m; j++)
+        {
+            if(gray[i*m+j] >= ansT) bit[i*m+j] = 1;
+            else bit[i*m+j] = 0;
+        }
 }
 void formatToReal(unsigned char* real, unsigned char *ImageData, int n, int m, int biBitCount)
 {
