@@ -95,15 +95,16 @@ bool read32bmp(char *bmpName, unsigned char* &ImageData, int& bmpWidth, int &bmp
 }
 void rgb2gray(unsigned char *gray, unsigned char* rgb, int n, int m)
 {
-    int biBitCount = 24;
+    int lineByte24 = calLineByte(m, 24);
+    int lineByte8 = calLineByte(m, 8);
     for(int i = 0; i < n; i++)
     {
-        for(int j = 0; j < m; j++)
+        for(int j = 0; j < lineByte24; j += 3)
         {
-            int B = rgb[i*m+j*3];
-            int G = rgb[i*m+j*3+1];
-            int R = rgb[i*m+j*3+2];
-            gray[i][j] = 0.229*R + 0.587*G + 0.114*B;
+            int B = rgb[i*lineByte24+j];
+            int G = rgb[i*lineByte24+j+1];
+            int R = rgb[i*lineByte24+j+2];
+            gray[i*lineByte8+j/3] = (int)(0.229*R + 0.587*G + 0.114*B);
         }
     }
 }
@@ -126,22 +127,22 @@ void OTSU(unsigned char *bit, unsigned char* gray, int n, int m)
     for(int i = 0 ; i < 256; i++)
         W1 += num[i], U1 += i * num[i];
 
-    double andG = -0x3f3f3f3f
+    double ansG = -0x3f3f3f3f;
     int ansT = 0;
     for(int i = 0; i < 256; i++)
     {
         double w1 = W1 / (n*m);
-        double u1 = 0
+        double u1 = 0;
         if(W1) u1 = U1 / W1;
 
         double w2 = W2 / (n*m);
         double u2 = 0;
         if(W2) u2 = U2 / W2;
 
-        double curG = w1*D(u1 - averu)+w2*D(u2-u);
-        if(curG > G + 1e-8)
+        double curG = w1*D(u1 - averU)+w2*D(u2-averU);
+        if(curG > ansG + 1e-8)
         {
-            G = curG;
+            ansG = curG;
             ansT = i;
         }
         //¸üÐÂW1, W2, U1, U2
@@ -157,6 +158,8 @@ void OTSU(unsigned char *bit, unsigned char* gray, int n, int m)
             if(gray[i*m+j] >= ansT) bit[i*m+j] = 1;
             else bit[i*m+j] = 0;
         }
+
+    delete []num;
 }
 void formatToReal(unsigned char* real, unsigned char *ImageData, int n, int m, int biBitCount)
 {

@@ -119,19 +119,45 @@ bool runOCR()
 void binaryzation()
 {
     int height, width, biBitCount;
-    char input[] = "bit-random.bmp";
-    char output[] = "denoise-random-bit.bmp";
+    char input[] = "gray-test.bmp";
+    char output[] = "denoise-random-gray.bmp";
     char *outputPath = new char[111];
     strcpy(outputPath, "random/After-cut-final/");
 
+    int b, f;
     unsigned char *ImageData; //Í¼ÏñÊý¾Ý
-    readBmp(input, ImageData, width, height, biBitCount, BACK, FORE);
+    readBmp(input, ImageData, width, height, biBitCount, b, f);
+    int lineByte24 = calLineByte(width, 24);
+//    unsigned char *real = new unsigned char[height*lineByte24];
+//    formatToReal(real, ImageData, height, lineByte24, biBitCount);
+//    realToFormat(ImageData, real, height, lineByte24/3, biBitCount);
+//    saveBmp(output, ImageData, width, height, biBitCount, pColorTable);
 
+    int lineByte8 = calLineByte(width, 8);
+    unsigned char *gray = new unsigned char[height * lineByte8];
+    if(biBitCount == 24) rgb2gray(gray, ImageData, height, width);
+
+    realToFormat(ImageData, gray, height, lineByte8, 8);
+
+//    if(pColorTable) delete []pColorTable;
+    pColorTable = new RGBQUAD[256];
+    for(int i = 0; i < 256; i++)
+        pColorTable[i] = (RGBQUAD){i, i, i, 0};
+    //saveBmp(output, ImageData, width, height, 8, pColorTable);
+
+    delete []pColorTable;
+    delete []outputPath;
+    delete []ImageData;
+    delete []gray;
 }
 int main()
 {
     //runOCR
     //if(runOCR()) return 0;
+
+    //run rgb2gray()
+    binaryzation();
+    return 0;
 //    char O[222] = "F:\\result";
 //    cout<<getUnicode(O)<<endl;
 //    return 0;
