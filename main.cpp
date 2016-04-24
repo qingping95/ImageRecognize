@@ -24,9 +24,41 @@ using namespace std;
 #define CHECK(x, y) ((x) >= 0 && (x) < n && (y) >= 0 && (y) < m)
 #define ID(x, y) ((x)*m+(y))
 #define DEBUG(x) cout<<#x<<" -> "<<x<<endl
+
 //K=2 十字相连
 //K=4 星型相连(default)
-void runUnite(ImageDsu &dsu, int n, int m, int K = 4)
+//合并相邻的所有像素
+void runUnite(ImageDsu &dsu, int n, int m, int K = 4);
+
+//得到所有的前景分量
+vector<int> getForeground(ImageDsu &Idsu, int Fore, int &mah, int &maw);
+
+// 对24位真彩图像做二值化处理
+void binaryzation();
+
+//合并相近的分量
+bool uniteCom(ImageDsu &Idsu, vector<int> v, int &mah, int &maw, bool use);
+
+//OCR识别接口
+bool runOCR();
+
+void cutImage();
+
+int main()
+{
+    //runOCR
+    //if(runOCR()) return 0;
+
+    //run rgb2gray()
+//    binaryzation();
+
+    //run cutImage()
+    cutImage();
+
+    return 0;
+}
+
+void runUnite(ImageDsu &dsu, int n, int m, int K)
 {
     int dir[4][2] = {0, 1, 1, 0, 1, 1, 1, -1};
     for(int i = 0; i < n; i++)
@@ -63,6 +95,7 @@ vector<int> getForeground(ImageDsu &Idsu, int Fore, int &mah, int &maw)
     v.erase(unique(v.begin(), v.end()), v.end());
     return v;
 }
+
 bool uniteCom(ImageDsu &Idsu, vector<int> v, int &mah, int &maw, bool use)
 {
     bool isUpdate = false;
@@ -119,9 +152,9 @@ bool runOCR()
 void binaryzation()
 {
     int height, width, biBitCount;
-    char input[] = "gray-test.bmp";
-    char outputGray[] = "denoise-random-gray.bmp";
-    char outputBit[] = "denoise-random-bit.bmp";
+    char input[] = "self_test.bmp";
+    char outputGray[] = "denoise-self-gray.bmp";
+    char outputBit[] = "denoise-self-bit.bmp";
     char *outputPath = new char[111];
     strcpy(outputPath, "random/After-cut-final/");
 
@@ -158,24 +191,14 @@ void binaryzation()
     delete []gray;
     delete []bmp;
 }
-int main()
+void cutImage()
 {
-    //runOCR
-    //if(runOCR()) return 0;
-
-    //run rgb2gray()
-    binaryzation();
-    return 0;
-//    char O[222] = "F:\\result";
-//    cout<<getUnicode(O)<<endl;
-//    return 0;
-    //freopen("outinfo.txt", "w", stdout);
     int BACK = 0, FORE = 1;
     int height, width, biBitCount;
-    char input[] = "bit-random.bmp";
-    char output[] = "denoise-random-bit.bmp";
+    char input[] = "bit-self.bmp";
+    char output[] = "denoise-self-bit.bmp";
     char *outputPath = new char[111];
-    strcpy(outputPath, "random/After-cut-final/");
+    strcpy(outputPath, "random/Self-cut-final/");
 
     unsigned char *ImageData; //图像数据
     readBmp(input, ImageData, width, height, biBitCount, BACK, FORE);
@@ -245,14 +268,7 @@ int main()
     sort(FG.begin(), FG.end());
     FG.erase(unique(FG.begin(), FG.end()), FG.end());
 
-    //save each component
-    //初始化颜色表
-//    if(pColorTable) delete[] pColorTable;
-//    pColorTable = new RGBQUAD[2];
-//    initColorTable(pColorTable);
-
-
-
+// 输出存储文件信息，并存储单字图片
     int len = strlen(outputPath);
     for(int i = 0; i < FG.size(); i++)
     {
@@ -276,8 +292,4 @@ int main()
     if(pColorTable) delete []pColorTable;
     if(realData) delete []realData;
     if(ImageData) delete []ImageData;
-
-
-
-    return 0;
 }
