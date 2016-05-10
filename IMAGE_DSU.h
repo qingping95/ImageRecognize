@@ -21,8 +21,9 @@ using namespace std;
 * BACK  -> ±³¾°É«
 * FORE  -> Ç°¾°É«
 */
-struct ImageDsu
+class ImageDsu
 {
+public:
     int n;
     int width, height;
     int *pa;

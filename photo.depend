@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1461341141 source:f:\acm\program\photo\main.cpp
+1461557703 source:f:\acm\program\photo\main.cpp
 	<assert.h>
 	<math.h>
 	<iomanip>
@@ -57,4 +57,77 @@
 	<shellapi.h>
 	<io.h>
 	<sstream>
+
+1462892518 source:f:\acm\gitacm\acm\program\photo\main.cpp
+	<assert.h>
+	<math.h>
+	<iomanip>
+	<stdlib.h>
+	<windows.h>
+	<algorithm>
+	<stdio.h>
+	<locale>
+	<stdlib.h>
+	<iostream>
+	<fstream>
+	<set>
+	<shellapi.h>
+	<string>
+	<sstream>
+	"IMAGE.h"
+	"OCR.h"
+	"Thinning.h"
+	"IMAGE_DSU.h"
+
+1462891083 f:\acm\gitacm\acm\program\photo\image.h
+	<assert.h>
+	<math.h>
+	<iomanip>
+	<stdlib.h>
+	<windows.h>
+	<stdio.h>
+	<stdlib.h>
+	<iostream>
+	<fstream>
+
+1460903621 f:\acm\gitacm\acm\program\photo\ocr.h
+	<assert.h>
+	<math.h>
+	<iomanip>
+	<stdlib.h>
+	<windows.h>
+	<algorithm>
+	<stdio.h>
+	<locale>
+	<stdlib.h>
+	<iostream>
+	<fstream>
+	<set>
+	<shellapi.h>
+	<io.h>
+	<sstream>
+
+1462890049 f:\acm\gitacm\acm\program\photo\thinning.h
+	<assert.h>
+	<math.h>
+	<iomanip>
+	<stdlib.h>
+	<windows.h>
+	<stdio.h>
+	<stdlib.h>
+	<iostream>
+	<fstream>
+	"IMAGE_DSU.h"
+	"Image.h"
+
+1462885289 f:\acm\gitacm\acm\program\photo\image_dsu.h
+	<assert.h>
+	<math.h>
+	<iomanip>
+	<stdlib.h>
+	<windows.h>
+	<stdio.h>
+	<stdlib.h>
+	<iostream>
+	<fstream>
 

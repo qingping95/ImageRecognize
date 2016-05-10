@@ -18,6 +18,7 @@
 //
 #include "IMAGE.h"
 #include "OCR.h"
+#include "Thinning.h"
 //
 #include "IMAGE_DSU.h"
 using namespace std;
@@ -44,18 +45,49 @@ bool runOCR();
 
 void cutImage();
 
+void runZhang(char* input);
+
 int main()
 {
     //runOCR
     //if(runOCR()) return 0;
 
-    //run rgb2gray()
-//    binaryzation();
+    //run binaryzation()
+    //binaryzation();
 
     //run cutImage()
-    cutImage();
-
+    //cutImage();
+    runZhang("8742365.bmp");
     return 0;
+}
+
+void runZhang(char *input)
+{
+    //freopen("ZhangResult.txt", "w", stdout);
+    int height, width, biBitCount;
+    unsigned char *ImageData; //图像数据
+    int b, f;
+    readBmp(input, ImageData, width, height, biBitCount, b, f);
+    int lineByte = calLineByte(width, 1);
+    unsigned char *data = new unsigned char[height*width];
+    formatToReal(data, ImageData, height, width, 1);
+    for(int i = 0; i < height; i++)
+    {
+        for(int j = 0; j < width; j++)
+        {
+            printf("%c", ".#"[data[i*width+j] == f]);
+        }
+        printf("\n");
+    }
+    Thinning solver(data, height, width, b, f);
+    printf("原图像：\n");
+    //solver.printToScreen(data);
+    printf("\n读入后：\n");
+    //solver.printToScreen(solver.color);
+
+    delete []pColorTable;
+    delete []ImageData;
+    delete []data;
 }
 
 void runUnite(ImageDsu &dsu, int n, int m, int K)
@@ -152,11 +184,9 @@ bool runOCR()
 void binaryzation()
 {
     int height, width, biBitCount;
-    char input[] = "self_test.bmp";
-    char outputGray[] = "denoise-self-gray.bmp";
-    char outputBit[] = "denoise-self-bit.bmp";
-    char *outputPath = new char[111];
-    strcpy(outputPath, "random/After-cut-final/");
+    char input[] = "self-test.bmp";
+    char outputGray[] = "gray-self.bmp";
+    char outputBit[] = "bit-self.bmp";
 
     int b, f;
     unsigned char *ImageData; //图像数据
@@ -186,7 +216,6 @@ void binaryzation()
     saveBmp(outputBit, ImageData, width, height, 1, pColorTable);
 
     delete []pColorTable;
-    delete []outputPath;
     delete []ImageData;
     delete []gray;
     delete []bmp;
@@ -198,18 +227,18 @@ void cutImage()
     char input[] = "bit-self.bmp";
     char output[] = "denoise-self-bit.bmp";
     char *outputPath = new char[111];
-    strcpy(outputPath, "random/Self-cut-final/");
+    strcpy(outputPath, "self-result/");
 
     unsigned char *ImageData; //图像数据
     readBmp(input, ImageData, width, height, biBitCount, BACK, FORE);
     int lineByte=calLineByte(width, biBitCount);//灰度图像有颜色表，且颜色表表项为256
 
     int realWidth = lineByte*8/biBitCount;
-    unsigned char* realData = new unsigned char[height*realWidth];
+    unsigned char* realData = new unsigned char[height*width];
 
-    formatToReal(realData, ImageData, height, lineByte, biBitCount);
+    formatToReal(realData, ImageData, height, width, biBitCount);
 
-    ImageDsu Idsu(height, realWidth);
+    ImageDsu Idsu(height, width);
 
     //导入颜色数据到并查集
     Idsu.importAttr(realData);
