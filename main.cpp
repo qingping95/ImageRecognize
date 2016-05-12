@@ -56,8 +56,8 @@ int main()
     //binaryzation();
 
     //run cutImage()
-    //cutImage();
-    runZhang("8742365.bmp");
+    cutImage();
+    //runZhang("4855102.bmp");
     return 0;
 }
 
@@ -222,12 +222,15 @@ void binaryzation()
 }
 void cutImage()
 {
+    freopen("outputinfo.txt", "w", stdout);
     int BACK = 0, FORE = 1;
     int height, width, biBitCount;
-    char input[] = "bit-self.bmp";
+//    char input[] = "bit-self.bmp";
+    char input[] = "4855102.bmp";
+
     char output[] = "denoise-self-bit.bmp";
     char *outputPath = new char[111];
-    strcpy(outputPath, "self-result/");
+    strcpy(outputPath, "test/");
 
     unsigned char *ImageData; //图像数据
     readBmp(input, ImageData, width, height, biBitCount, BACK, FORE);
@@ -238,6 +241,8 @@ void cutImage()
 
     formatToReal(realData, ImageData, height, width, biBitCount);
 
+
+
     ImageDsu Idsu(height, width);
 
     //导入颜色数据到并查集
@@ -246,11 +251,24 @@ void cutImage()
     //合并各分量
     runUnite(Idsu, height, realWidth, 4);
 
+//    for(int i = 0; i < height; i++)
+//    {
+//        for(int j = 0; j < width; j++)
+//        {
+//            printf("%c", ".#"[Idsu.color[i*width+j] == FORE]);
+//        }
+//        printf("\n");
+//    }
+//    return ;
+//    Idsu.printCom(idx);
+//    return ;
+
     //降噪
     Idsu.denoise(BACK, FORE, width, 30);
 
 //    //转换给ImageData
     Idsu.exportAttr(realData);
+
     realToFormat(ImageData, realData, height, realWidth, biBitCount);
 
     saveBmp(output, ImageData, width, height, biBitCount, pColorTable);

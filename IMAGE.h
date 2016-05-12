@@ -166,13 +166,13 @@ void formatToReal(unsigned char* real, unsigned char *ImageData, int n, int w, i
 {
     if(biBitCount > 8) return ;
     int m = calLineByte(w, biBitCount);
+    int cover = (1 << biBitCount) - 1;
     int num = 8/biBitCount;
     for(int i = 0; i < n; i++)
     {
         for(int j = 0; j < m; j++)
         {
             int RGBs = ImageData[i*m+j];
-            int cover = (1 << biBitCount) - 1;
             for(int k = num-1; k >= 0; k--)
             {
                 if(i*m*num+j*num+k < (i+1)*w) real[i*m*num+j*num+k] = RGBs & cover;

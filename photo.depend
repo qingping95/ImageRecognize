@@ -58,7 +58,7 @@
 	<io.h>
 	<sstream>
 
-1462892518 source:f:\acm\gitacm\acm\program\photo\main.cpp
+1462979128 source:f:\acm\gitacm\acm\program\photo\main.cpp
 	<assert.h>
 	<math.h>
 	<iomanip>
@@ -79,7 +79,7 @@
 	"Thinning.h"
 	"IMAGE_DSU.h"
 
-1462891083 f:\acm\gitacm\acm\program\photo\image.h
+1462974872 f:\acm\gitacm\acm\program\photo\image.h
 	<assert.h>
 	<math.h>
 	<iomanip>
