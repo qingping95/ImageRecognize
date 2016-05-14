@@ -12,7 +12,7 @@
 
 using namespace std;
 
-#define DEBUG(x) cout<<#x<<" -> "<<x<<endl
+#define DEBUG(x) cerr<<#x<<" -> "<<x<<endl
 
 RGBQUAD *pColorTable;//颜色表指针
 
@@ -44,6 +44,8 @@ bool readBmp(char *bmpName, unsigned char* &ImageData, int& bmpWidth, int& bmpHe
     //输出图像的信息
 
     cout<<"width = "<<bmpWidth<<" height = "<<bmpHeight<<" biBitCount = "<<biBitCount<<endl;
+    DEBUG(bmphead.biClrUsed);
+    DEBUG(bmphead.biClrImportant);
     DEBUG(bmphead.biSizeImage);
     DEBUG(bmphead.biCompression);
     int lineByte=((bmpWidth * biBitCount+7)/8+3)/4*4;//灰度图像有颜色表，且颜色表表项为256
@@ -175,7 +177,7 @@ void formatToReal(unsigned char* real, unsigned char *ImageData, int n, int w, i
             int RGBs = ImageData[i*m+j];
             for(int k = num-1; k >= 0; k--)
             {
-                if(i*m*num+j*num+k < (i+1)*w) real[i*m*num+j*num+k] = RGBs & cover;
+                if(i*w+j*num+k < (i+1)*w) real[i*w+j*num+k] = RGBs & cover;
                 RGBs >>= biBitCount;
             }
         }

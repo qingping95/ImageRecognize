@@ -27,7 +27,8 @@ public:
         n = h*w;
         color = new int[h*w];
         for(int i = 0; i < n; i++)
-            color[i] = (data[i]==FORE);
+            color[i] = (data[i] == FORE);
+        //black(FORE) is 1, white(BACK) is 0;
     }
     ~Thinning()
     {
@@ -35,25 +36,32 @@ public:
     }
     void printToScreen(int *pri)
     {
-        for(int i = 0; i < height; i++)
+        for(int i = height-1; i >= 0; i--)
         {
             for(int j = 0; j < width; j++)
             {
-                printf("%c", ".#"[pri[i*width+j]]);
+                printf("%c", "#."[pri[i*width+j]]);
             }
             printf("\n");
         }
     }
     void printToScreen(unsigned char *pri)
     {
-        for(int i = 0; i < height; i++)
+        for(int i = height-1; i >= 0; i--)
         {
             for(int j = 0; j < width; j++)
             {
-                printf("%c", ".#"[pri[i*width+j]]);
+                printf("%c", "#."[pri[i*width+j]]);
             }
             printf("\n");
         }
+    }
+    //返回当前的图形中的黑像素个数
+    int numOfFORE()
+    {
+        int res = 0;
+        for(int i = 0 ; i < n; i++) res += color[i];
+        return res;
     }
     void runZhangThinning()
     {
@@ -63,26 +71,42 @@ public:
         memset(vis, 0, sizeof(bool)*height*width);
 
         bool run = true;
+        int cas = 0;
         while(run)
         {
             run = false;
+            //printf("there are %d times sprint", ++cas);
+            for(int i = 0; i < n; i++)
+            {
+                if(vis[i])
+                {
+                    cerr<<"FUCK!!!!!!!!!!!"<<endl;
+                    break;
+                }
+            }
+            cas++;
+//            if(cas % 100 == 0)
+                cerr<<"there are "<<cas<<" times sprint"<<endl;
+//            if(cas > 1000) break;
             //sprint one
             for(int i = 0; i < height; i++)
                 for(int j = 0; j < width; j++)
-                    vis[i*width+j] = judge(i, j, tc, 1);
+                    if(color[i*width+j] && vis[i*width+j] == 0)
+                        vis[i*width+j] = judge(i, j, color, 1);
             run |= clearRubbish(vis);
 
             //sprint two
             for(int i = 0; i < height; i++)
                 for(int j = 0; j < width; j++)
-                    vis[i*width+j] = judge(i, j, tc, 2);
+                    if(color[i*width+j] && vis[i*width+j] == 0)
+                        vis[i*width+j] = judge(i, j, color, 2);
             run |= clearRubbish(vis);
         }
 
         delete []vis;
         delete []tc;
     }
-    bool clearRubbish(bool *vis)
+    bool clearRubbish(bool* &vis)
     {
         bool update = false;
         for(int i = 0; i < n; i++)
@@ -98,7 +122,7 @@ public:
     bool judge(int x, int y, int *tc, int type)
     {
         int dir[][2] = {{-1, 0}, {-1, 1}, {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}};
-        bool vis[222];
+        bool vis[322];
         vis[65] = 1; vis[5] = 1; vis[20] = 1;  vis[80] = 1; vis[13] = 1; vis[22] = 1;
         vis[52] = 1; vis[133] = 1; vis[141] = 1; vis[54] = 1;
         int p[11];
@@ -114,6 +138,7 @@ public:
             }else{
                 curv = tc[cx*width+cy];
             }
+            p[i+2] = curv;
             n += (curv == 1);
             s += (curv == 1 && prev == 0);
             b += (curv << i);
@@ -124,16 +149,19 @@ public:
         if(!CHECK1(cx, cy)) curv = 0;
         else curv = tc[cx*width+cy];
         s += (curv == 1 && prev == 0);
+
         bool p2 = p[2]*p[4]*p[6];
         bool p4 = p[2]*p[4]*p[8];
         bool p6 = p[2]*p[6]*p[8];
         bool p8 = p[4]*p[6]*p[8];
-        if(type == 1 && n >= 2 && n <= 6 && (s == 1 || vis[b]) && p2==0 && p8==0)
+//        if(type == 1 && n >= 2 && n <= 6 && (s == 1 || vis[b]) && p2==0 && p8==0)
+        if(type == 1 && n >= 2 && n <= 6 && (s == 1) && p2==0 && p8==0)
             return true;
-        if(type == 2 && n >= 2 && n <= 6 && (s == 1 || vis[b]) && p4==0 && p6==0)
+//        if(type == 2 && n >= 2 && n <= 6 && (s == 1 || vis[b]) && p4==0 && p6==0)
+        if(type == 2 && n >= 2 && n <= 6 && (s == 1) && p4==0 && p6==0)
             return true;
-        else
-            return false;
+
+        return false;
     }
 };
 

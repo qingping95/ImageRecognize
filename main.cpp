@@ -56,14 +56,14 @@ int main()
     //binaryzation();
 
     //run cutImage()
-    cutImage();
-    //runZhang("4855102.bmp");
+    //cutImage();
+    int d = runZhang("222.bmp");
     return 0;
 }
-
-void runZhang(char *input)
+//利用Zhang算法得到平均的笔画长度。
+int runZhang(char *input)
 {
-    //freopen("ZhangResult.txt", "w", stdout);
+    freopen("ZhangResult.txt", "w", stdout);
     int height, width, biBitCount;
     unsigned char *ImageData; //图像数据
     int b, f;
@@ -71,23 +71,24 @@ void runZhang(char *input)
     int lineByte = calLineByte(width, 1);
     unsigned char *data = new unsigned char[height*width];
     formatToReal(data, ImageData, height, width, 1);
-    for(int i = 0; i < height; i++)
-    {
-        for(int j = 0; j < width; j++)
-        {
-            printf("%c", ".#"[data[i*width+j] == f]);
-        }
-        printf("\n");
-    }
+
+//    realToFormat(ImageData, data, height, width, 1);
+//    saveBmp("save_test.bmp", ImageData, width, height, 1, pColorTable);
+//    return ;
+
     Thinning solver(data, height, width, b, f);
-    printf("原图像：\n");
-    //solver.printToScreen(data);
-    printf("\n读入后：\n");
-    //solver.printToScreen(solver.color);
+    int originN = solver.numOfFORE();
+    printf("initial image:\n");
+    solver.printToScreen(data);
+    solver.runZhangThinning();
+    printf("\nafter thinning：\n");
+    solver.printToScreen(solver.color);
+    int finalN = solver.numOfFORE();
 
     delete []pColorTable;
     delete []ImageData;
     delete []data;
+    return originN / finalN;
 }
 
 void runUnite(ImageDsu &dsu, int n, int m, int K)
@@ -222,11 +223,11 @@ void binaryzation()
 }
 void cutImage()
 {
-    freopen("outputinfo.txt", "w", stdout);
+    //freopen("outputinfo.txt", "w", stdout);
     int BACK = 0, FORE = 1;
     int height, width, biBitCount;
-//    char input[] = "bit-self.bmp";
-    char input[] = "4855102.bmp";
+    char input[] = "bit-self.bmp";
+//    char input[] = "4855102.bmp";
 
     char output[] = "denoise-self-bit.bmp";
     char *outputPath = new char[111];
@@ -235,6 +236,7 @@ void cutImage()
     unsigned char *ImageData; //图像数据
     readBmp(input, ImageData, width, height, biBitCount, BACK, FORE);
     int lineByte=calLineByte(width, biBitCount);//灰度图像有颜色表，且颜色表表项为256
+
 
     int realWidth = lineByte*8/biBitCount;
     unsigned char* realData = new unsigned char[height*width];
