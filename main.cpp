@@ -68,7 +68,7 @@ int main()
 
     //run cutImage()
     //cutImage();
-    selfThinningDriver("GB1000_R.bmp");
+    selfThinningDriver("222.bmp");
     return 0;
 }
 typedef pair<int, int> PII;
@@ -109,6 +109,8 @@ void selfThinning(int* data, int n, int m, int d)
     int LOW_LIMIT = d/2 - d/4;
     cerr<<"LOW_LIMIT -> "<<LOW_LIMIT<<endl;
     priority_queue<PII, vector<PII >, greater<PII > > que;
+
+    ///int -> double
     int *num = new int[n*m];
     bool *vis = new bool[n*m];
     memset(vis, 0, sizeof(bool)*n*m);
@@ -142,8 +144,22 @@ void selfThinning(int* data, int n, int m, int d)
                 num[cx*m+cy] = cn+w;
                 que.push(PII(cn+w, cx*m+cy));
             }
+            if(num[cx*m+cy] < num[idx]) data[cx*m+cy] = 0;
         }
     }
+    for(int i = 0; i < n; i++)
+        for(int j = 0; j < m; j++)
+        {
+            if(!data[i*m+j]) continue;
+            for(int k = 0 ; k < 8; k++)
+            {
+                int cx = i + dir[k][0];
+                int cy = j + dir[k][1];
+                if(!CHECK(cx, cy)) continue;
+                if(num[i*m+j] > num[cx*m+cy]) data[cx*m+cy] = 0;
+            }
+        }
+
     printf("After Thinning:\n");
     printImage(data, n, m);
     fclose(stdout);
