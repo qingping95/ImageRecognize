@@ -13,6 +13,7 @@
 #include <shellapi.h>
 #include <string>
 #include <sstream>
+#include <queue>
 //
 //结束时需要释放pColorTable这个指针的内存
 //
@@ -23,8 +24,12 @@
 #include "IMAGE_DSU.h"
 using namespace std;
 #define CHECK(x, y) ((x) >= 0 && (x) < n && (y) >= 0 && (y) < m)
+
 #define ID(x, y) ((x)*m+(y))
 #define DEBUG(x) cout<<#x<<" -> "<<x<<endl
+
+//print current image
+void printImage(int *data, int n, int m);
 
 //K=2 十字相连
 //K=4 星型相连(default)
@@ -45,7 +50,13 @@ bool runOCR();
 
 void cutImage();
 
-void runZhang(char* input);
+//Zhang Algorithm
+int runZhang(unsigned char *data, int height, int width, int b, int f);
+
+
+//Self Algorithm
+void selfThinningDriver(char *input);
+void selfThinning(int* data, int n, int m, int d);
 
 int main()
 {
@@ -57,13 +68,12 @@ int main()
 
     //run cutImage()
     //cutImage();
-    int d = runZhang("222.bmp");
+    selfThinningDriver("GB1000_R.bmp");
     return 0;
 }
-//利用Zhang算法得到平均的笔画长度。
-int runZhang(char *input)
+typedef pair<int, int> PII;
+void selfThinningDriver(char *input)
 {
-    freopen("ZhangResult.txt", "w", stdout);
     int height, width, biBitCount;
     unsigned char *ImageData; //图像数据
     int b, f;
@@ -76,18 +86,110 @@ int runZhang(char *input)
 //    saveBmp("save_test.bmp", ImageData, width, height, 1, pColorTable);
 //    return ;
 
-    Thinning solver(data, height, width, b, f);
-    int originN = solver.numOfFORE();
-    printf("initial image:\n");
-    solver.printToScreen(data);
-    solver.runZhangThinning();
-    printf("\nafter thinning：\n");
-    solver.printToScreen(solver.color);
-    int finalN = solver.numOfFORE();
+    int d = runZhang(data, height, width, b, f);
+    DEBUG(d);
+    int *BW = new int[height*width];
+    for(int i = 0; i < height*width; i++)
+    {
+        BW[i] = (data[i] == f);
+    }
 
+    selfThinning(BW, height, width, d);
+
+    delete []BW;
     delete []pColorTable;
     delete []ImageData;
     delete []data;
+}
+void selfThinning(int* data, int n, int m, int d)
+{
+    freopen("SelfResult.txt", "w", stdout);
+    printf("initial :\n");
+    printImage(data, n, m);
+    int LOW_LIMIT = d/2 - d/4;
+    cerr<<"LOW_LIMIT -> "<<LOW_LIMIT<<endl;
+    priority_queue<PII, vector<PII >, greater<PII > > que;
+    int *num = new int[n*m];
+    bool *vis = new bool[n*m];
+    memset(vis, 0, sizeof(bool)*n*m);
+    memset(num, 0x3f, sizeof(int)*n*m);
+
+    int dir[][2] = {{-1, 0}, {-1, 1}, {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}};
+    for(int i = 0; i < n * m; i++)
+    {
+        if(data[i]) continue;
+        num[i] = 0;
+        que.push(PII(0, i));
+    }
+
+    while(!que.empty())
+    {
+        PII cur = que.top();que.pop();
+        int cn = cur.first, idx = cur.second;
+        if(vis[idx]) continue;
+        vis[idx] = 1;
+        int x = idx / m, y = idx % m;
+        if(num[idx] < LOW_LIMIT && data[idx])  data[idx] = 0;
+        for(int i = 0; i < 8; i++)
+        {
+            int cx = x + dir[i][0];
+            int cy = y + dir[i][1];
+            if(!CHECK(cx, cy)) continue;
+            if(vis[cx*m+cy]) continue;
+            int w = data[cx*m+cy];
+            if(cn + w < num[cx*m+cy])
+            {
+                num[cx*m+cy] = cn+w;
+                que.push(PII(cn+w, cx*m+cy));
+            }
+        }
+    }
+    printf("After Thinning:\n");
+    printImage(data, n, m);
+    fclose(stdout);
+    freopen("CON", "w", stdout);
+
+    delete []vis;
+    delete []num;
+}
+
+void printImage(int *data, int n, int m)
+{
+    for(int i = n-1; i>= 0; i --)
+    {
+        for(int j = 0; j < m; j++)
+        {
+            printf("%c", ".#"[data[i*m+j]]);
+        }
+        printf("\n");
+    }
+}
+
+//利用Zhang算法得到平均的笔画长度。
+int runZhang(unsigned char *data, int height, int width, int b, int f)
+{
+    freopen("ZhangResult.txt", "w", stdout);
+
+    //import data to Thinning object
+    Thinning solver(data, height, width, b, f);
+
+    //get the origin pixel number of image
+    int originN = solver.numOfFORE();
+    printf("initial image:\n");
+    solver.printToScreen(data);
+
+    //run algorithm
+    solver.runZhangThinning();
+    printf("\nafter thinning：\n");
+    solver.printToScreen(solver.color);
+
+    //get the pixel number of image after thinning
+    int finalN = solver.numOfFORE();
+
+    fclose(stdout);
+    freopen("CON", "w", stdout);
+    DEBUG(originN);
+    DEBUG(finalN);
     return originN / finalN;
 }
 

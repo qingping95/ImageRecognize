@@ -58,7 +58,7 @@
 	<io.h>
 	<sstream>
 
-1463210931 source:f:\acm\gitacm\acm\program\photo\main.cpp
+1463222990 source:f:\acm\gitacm\acm\program\photo\main.cpp
 	<assert.h>
 	<math.h>
 	<iomanip>
@@ -74,6 +74,7 @@
 	<shellapi.h>
 	<string>
 	<sstream>
+	<queue>
 	"IMAGE.h"
 	"OCR.h"
 	"Thinning.h"
@@ -107,7 +108,7 @@
 	<io.h>
 	<sstream>
 
-1463213004 f:\acm\gitacm\acm\program\photo\thinning.h
+1463217024 f:\acm\gitacm\acm\program\photo\thinning.h
 	<assert.h>
 	<math.h>
 	<iomanip>

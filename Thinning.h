@@ -74,20 +74,12 @@ public:
         int cas = 0;
         while(run)
         {
+            //The mark determine whether to continue sprint
             run = false;
-            //printf("there are %d times sprint", ++cas);
-            for(int i = 0; i < n; i++)
-            {
-                if(vis[i])
-                {
-                    cerr<<"FUCK!!!!!!!!!!!"<<endl;
-                    break;
-                }
-            }
+
             cas++;
-//            if(cas % 100 == 0)
-                cerr<<"there are "<<cas<<" times sprint"<<endl;
-//            if(cas > 1000) break;
+            cerr<<"there are "<<cas<<" times sprint"<<endl;
+
             //sprint one
             for(int i = 0; i < height; i++)
                 for(int j = 0; j < width; j++)
@@ -106,6 +98,8 @@ public:
         delete []vis;
         delete []tc;
     }
+
+    //clear all pixel that satisfy vis[i] == 1
     bool clearRubbish(bool* &vis)
     {
         bool update = false;
