@@ -32,6 +32,7 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="ContourBaseThin.h" />
 		<Unit filename="IMAGE_DSU.h" />
 		<Unit filename="Image.h" />
 		<Unit filename="OCR.h" />

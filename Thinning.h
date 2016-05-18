@@ -112,7 +112,7 @@ public:
             }
         return update;
     }
-    #define CHECK1(x, y) (x >= 0 && x < height && y >= 0 && y < width)
+    #define CHECKWH(x, y) (x >= 0 && x < height && y >= 0 && y < width)
     bool judge(int x, int y, int *tc, int type)
     {
         int dir[][2] = {{-1, 0}, {-1, 1}, {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}};
@@ -127,7 +127,7 @@ public:
             int cx = x + dir[i][0];
             int cy = y + dir[i][1];
             int curv = -1;
-            if(!CHECK1(cx, cy)){
+            if(!CHECKWH(cx, cy)){
                 curv = 0;
             }else{
                 curv = tc[cx*width+cy];
@@ -140,7 +140,7 @@ public:
         }
         int cx = x - 1, cy = y;
         int curv = -1;
-        if(!CHECK1(cx, cy)) curv = 0;
+        if(!CHECKWH(cx, cy)) curv = 0;
         else curv = tc[cx*width+cy];
         s += (curv == 1 && prev == 0);
 

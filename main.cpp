@@ -20,6 +20,7 @@
 #include "IMAGE.h"
 #include "OCR.h"
 #include "Thinning.h"
+#include "ContourBaseThin.h"
 //
 #include "IMAGE_DSU.h"
 using namespace std;
@@ -51,12 +52,15 @@ bool runOCR();
 void cutImage();
 
 //Zhang Algorithm
-int runZhang(unsigned char *data, int height, int width, int b, int f);
+int runZhang(unsigned char *data, int height, int width, int b, int f, bool isSave);
 
 
 //Self Algorithm
 void selfThinningDriver(char *input);
 void selfThinning(int* data, int n, int m, int d);
+
+//Contour-Based Thinning
+void ContourDriver(char *input);
 
 int main()
 {
@@ -68,10 +72,28 @@ int main()
 
     //run cutImage()
     //cutImage();
-    selfThinningDriver("222.bmp");
+//    selfThinningDriver("GB1000_R.bmp");
+    ContourDriver("bit-a.bmp");
     return 0;
 }
 typedef pair<int, int> PII;
+void ContourDriver(char *input)
+{
+    int height, width, biBitCount;
+    unsigned char *ImageData; //图像数据
+    int b, f;
+    readBmp(input, ImageData, width, height, biBitCount, b, f);
+    int lineByte = calLineByte(width, 1);
+    unsigned char *data = new unsigned char[height*width];
+    formatToReal(data, ImageData, height, width, 1);
+
+    ContourBaseThin Thin(data, height, width, b, f);
+    Thin.getContourVector(true);
+
+    delete []pColorTable;
+    delete []ImageData;
+    delete []data;
+}
 void selfThinningDriver(char *input)
 {
     int height, width, biBitCount;
@@ -86,7 +108,7 @@ void selfThinningDriver(char *input)
 //    saveBmp("save_test.bmp", ImageData, width, height, 1, pColorTable);
 //    return ;
 
-    int d = runZhang(data, height, width, b, f);
+    int d = runZhang(data, height, width, b, f, 1);
     DEBUG(d);
     int *BW = new int[height*width];
     for(int i = 0; i < height*width; i++)
@@ -106,7 +128,8 @@ void selfThinning(int* data, int n, int m, int d)
     freopen("SelfResult.txt", "w", stdout);
     printf("initial :\n");
     printImage(data, n, m);
-    int LOW_LIMIT = d/2 - d/4;
+//    int LOW_LIMIT = 5;
+    int LOW_LIMIT = d/2-5;
     cerr<<"LOW_LIMIT -> "<<LOW_LIMIT<<endl;
     priority_queue<PII, vector<PII >, greater<PII > > que;
 
@@ -116,7 +139,7 @@ void selfThinning(int* data, int n, int m, int d)
     memset(vis, 0, sizeof(bool)*n*m);
     memset(num, 0x3f, sizeof(int)*n*m);
 
-    int dir[][2] = {{-1, 0}, {-1, 1}, {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}};
+    int dir[][2] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {-1, 1}, {1, 1}, {1, -1}, {-1, -1}};
     for(int i = 0; i < n * m; i++)
     {
         if(data[i]) continue;
@@ -132,7 +155,7 @@ void selfThinning(int* data, int n, int m, int d)
         vis[idx] = 1;
         int x = idx / m, y = idx % m;
         if(num[idx] < LOW_LIMIT && data[idx])  data[idx] = 0;
-        for(int i = 0; i < 8; i++)
+        for(int i = 0; i < 4; i++)
         {
             int cx = x + dir[i][0];
             int cy = y + dir[i][1];
@@ -144,22 +167,27 @@ void selfThinning(int* data, int n, int m, int d)
                 num[cx*m+cy] = cn+w;
                 que.push(PII(cn+w, cx*m+cy));
             }
-            if(num[cx*m+cy] < num[idx]) data[cx*m+cy] = 0;
         }
     }
     for(int i = 0; i < n; i++)
         for(int j = 0; j < m; j++)
         {
             if(!data[i*m+j]) continue;
-            for(int k = 0 ; k < 8; k++)
+            for(int k = 0 ; k < 4; k++)
             {
                 int cx = i + dir[k][0];
                 int cy = j + dir[k][1];
                 if(!CHECK(cx, cy)) continue;
-                if(num[i*m+j] > num[cx*m+cy]) data[cx*m+cy] = 0;
+                //if(num[i*m+j] > num[cx*m+cy]) data[cx*m+cy] = 0;
             }
         }
-
+    printf("After Thinning:\n");
+    for(int i = n-1; i >= 0; i--,printf("\n"))
+        for(int j = 0; j < m; j++)
+            if(num[i*m+j] == 0)
+                printf(".");
+            else
+                printf("%x", num[i*m+j]);
     printf("After Thinning:\n");
     printImage(data, n, m);
     fclose(stdout);
@@ -182,7 +210,7 @@ void printImage(int *data, int n, int m)
 }
 
 //利用Zhang算法得到平均的笔画长度。
-int runZhang(unsigned char *data, int height, int width, int b, int f)
+int runZhang(unsigned char *data, int height, int width, int b, int f, bool isSave)
 {
     freopen("ZhangResult.txt", "w", stdout);
 
@@ -198,7 +226,19 @@ int runZhang(unsigned char *data, int height, int width, int b, int f)
     solver.runZhangThinning();
     printf("\nafter thinning：\n");
     solver.printToScreen(solver.color);
+    if(isSave){
+        unsigned char *sData = new unsigned char[height*width];
+        int lineByte = calLineByte(width, 1);
+        unsigned char *formatData = new unsigned char[height*lineByte];
+        for(int i = 0; i < height; i ++)
+            for(int j = 0; j < width; j++)
+                sData[i*width+j] = solver.color[i*width+j] == 1 ? solver.FORE : solver.BACK;
 
+        realToFormat(formatData, sData, height, width, 1);
+        saveBmp("ZhangResult/GB1000_R.bmp", formatData, width, height, 1, pColorTable);
+        delete []sData;
+        delete []formatData;
+    }
     //get the pixel number of image after thinning
     int finalN = solver.numOfFORE();
 

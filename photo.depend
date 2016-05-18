@@ -58,7 +58,7 @@
 	<io.h>
 	<sstream>
 
-1463222990 source:f:\acm\gitacm\acm\program\photo\main.cpp
+1463590746 source:f:\acm\gitacm\acm\program\photo\main.cpp
 	<assert.h>
 	<math.h>
 	<iomanip>
@@ -78,6 +78,7 @@
 	"IMAGE.h"
 	"OCR.h"
 	"Thinning.h"
+	"ContourBaseThin.h"
 	"IMAGE_DSU.h"
 
 1463211553 f:\acm\gitacm\acm\program\photo\image.h
@@ -108,7 +109,7 @@
 	<io.h>
 	<sstream>
 
-1463217024 f:\acm\gitacm\acm\program\photo\thinning.h
+1463589918 f:\acm\gitacm\acm\program\photo\thinning.h
 	<assert.h>
 	<math.h>
 	<iomanip>
@@ -131,4 +132,17 @@
 	<stdlib.h>
 	<iostream>
 	<fstream>
+
+1463590985 f:\acm\gitacm\acm\program\photo\contourbasethin.h
+	<assert.h>
+	<math.h>
+	<iomanip>
+	<stdlib.h>
+	<windows.h>
+	<stdio.h>
+	<stdlib.h>
+	<iostream>
+	<fstream>
+	"IMAGE_DSU.h"
+	"Image.h"
 
