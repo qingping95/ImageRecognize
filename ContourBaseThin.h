@@ -61,13 +61,16 @@ public:
 
     void dfs(int x, int y)
     {
+        //DEBUG(x*width+y);
         Contour.push_back(x*width+y);
         for(int i = 0; i < 8; i++)
         {
             int cx = x + dir[i][0];
             int cy = y + dir[i][1];
-            if(vis[cx][cy]) continue;
-            vis[cx][cy] = 1;
+            if(!CHECKWH(cx, cy)) continue;
+            if(vis[cx*width+cy]) continue;
+            if(!isContour[cx*width+cy]) continue;
+            vis[cx*width+cy] = 1;
             dfs(cx, cy);
         }
     }
@@ -79,7 +82,9 @@ public:
     void getContourVector(bool isPrint)
     {
         memset(isContour, 0, sizeof(bool)*height*width);
+        memset(vis, 0, sizeof(bool)*height*width);
         Contour.clear();
+        int num = 0;
         for(int i = 0; i < n; i++)
         {
             if(color[i] == 0) continue;
@@ -93,11 +98,17 @@ public:
                 if(color[cx*width+cy] == 0) zeroNum++;
             }
             //if the number of background pixel that joint this pixel more than 0, this pixel was considered a contour pixel
-            if(zeroNum > 0) isContour[i] = 1;
+            if(zeroNum > 0) isContour[i] = 1, num++;
         }
+        //cerr << "zeroNum ->" << num << endl;
         for(int i = 0; i < height; i++)
             for(int j = 0; j < width; j++)
-                if(vis[i])
+                if(isContour[i*width+j] && vis[i*width+j] == 0)
+                    vis[i*width+j] = 1, dfs(i, j);
+
+        //cerr << "zeroNum ->" << num << endl;
+        DEBUG(num);
+        DEBUG(Contour.size());
         if(isPrint)
         {
             for(int i = height-1; i >= 0; i--, printf("\n"))
@@ -110,18 +121,20 @@ public:
     bool getSegment(bool isPrint)
     {
         if(Contour.size() == 0) return false;
+        memset(pcolor, 0, sizeof(int)*height*width);
         contourSeg.clear();
         vector<PII> segment;
         const double PI = acos(-1.0);
         segment.clear();
-        int start = 0, fuhao = -2;
-        int sx = Contour[start] / width;
-        int sy = Contour[start] % width;
+        int sx = Contour[0] / width;
+        int sy = Contour[0] % width;
+        cerr << sx <<" : "<< sy << endl;
         for(int i = 0; i < Contour.size(); i ++)
         {
             int cx = Contour[i] / width;
             int cy = Contour[i] % width;
-            theta[i] = (cy - sy)*1.0 / (cx - sx);
+            if(cx != sx) theta[i] = atan2((cy - sy)*1.0,  (cx - sx));
+            else theta[i] = PI/2;
             if(i) dTheta[i] = theta[i] - theta[i-1];
         }
         int st = 0;
@@ -130,6 +143,7 @@ public:
             if(sign(dTheta[i]) != sign(dTheta[i-1]))
             {
                 segment.push_back(PII(st, i-1));
+                //cerr<<st<<" -> "<<i-1<<endl;
                 st = i;
             }
         }
@@ -137,7 +151,7 @@ public:
         for(int i = 0; i < segment.size(); i++)
         {
             double diff = dTheta[segment[i].second] - dTheta[segment[i].first];
-            if(diff > tan(10.0/180*PI) || diff < tan(10.0/180*PI)) {
+            if(diff > (10.0/180*PI) || diff < (10.0/180*PI)) {
                 if(i > st){
                     contourSeg.push_back(PII(segment[st].first, segment[i-1].second));
                     st = i;
@@ -146,7 +160,7 @@ public:
                     for(int j = segment[i].first+1; j <= segment[i].second; j++)
                     {
                         diff = dTheta[j] - dTheta[segment[i].first];
-                        if(diff > tan(10.0/180*PI) || diff < tan(10.0/180*PI)){
+                        if(diff > (10.0/180*PI) || diff < (-10.0/180*PI)){
                             contourSeg.push_back(PII(segment[st].first, j-1));
                             segment[st].first = j;
                             i--;

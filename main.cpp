@@ -92,6 +92,11 @@ void ContourDriver(char *input)
     Thin.getContourVector(true);
     Thin.getSegment(true);
 
+//    int lineByte = calLineByte(width, 8);
+//    unsigned char* newData = new unsigned char[height*lineByte];
+//    realToFormat()
+
+
     delete []pColorTable;
     delete []ImageData;
     delete []data;
