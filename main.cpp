@@ -73,7 +73,7 @@ int main()
     //run cutImage()
     //cutImage();
 //    selfThinningDriver("GB1000_R.bmp");
-    ContourDriver("bit-a.bmp");
+    ContourDriver("GB1000_R.bmp");
     return 0;
 }
 typedef pair<int, int> PII;
@@ -88,15 +88,37 @@ void ContourDriver(char *input)
     formatToReal(data, ImageData, height, width, 1);
 
     ContourBaseThin Thin(data, height, width, b, f);
-    freopen("ContourBaseResult.txt", "w", stdout);
+    freopen("GB1000_R-rs.txt", "w", stdout);
     Thin.getContourVector(true);
+
+    //code for saving image
+//    for(int i = 0; i < height*width; i++)
+//        data[i] = !Thin.pcolor[i];
+//    realToFormat(ImageData, data, height, width, 1);
+//    saveBmp("GB1000_R-Contour.bmp", ImageData, width, height, 1, pColorTable);
+
     Thin.getSegment(true);
+    fclose(stdout);
+    freopen("CON", "w", stdout);
 
-//    int lineByte = calLineByte(width, 8);
+    //code for saving image
+//    cout<<"saving"<<endl;
+//    lineByte = calLineByte(width, 8);
 //    unsigned char* newData = new unsigned char[height*lineByte];
-//    realToFormat()
+//    Thin.get256Color();
+//    for(int i = 0;i < height*width; i++)
+//        data[i] = Thin.pcolor[i];
+//    realToFormat(newData, data, height, width, 8);
+//    RGBQUAD* newColorTable = new RGBQUAD[256];
+//    for(int i = 0; i < 256; i++)
+//        newColorTable[i].rgbBlue = newColorTable[i].rgbGreen = newColorTable[i].rgbRed = i;
+//    newColorTable[0].rgbBlue = 255, newColorTable[0].rgbGreen = newColorTable[0].rgbRed = 0;
+//    newColorTable[1].rgbGreen = 255, newColorTable[1].rgbBlue = newColorTable[1].rgbRed = 0;
+//    newColorTable[2].rgbRed = 255, newColorTable[2].rgbGreen = newColorTable[2].rgbBlue = 0;
+//    saveBmp("GB5_R-rs.bmp", newData, width, height, 8, newColorTable);
 
-
+    delete []newColorTable;
+    delete []newData;
     delete []pColorTable;
     delete []ImageData;
     delete []data;

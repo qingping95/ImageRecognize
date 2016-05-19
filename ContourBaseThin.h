@@ -83,6 +83,7 @@ public:
     {
         memset(isContour, 0, sizeof(bool)*height*width);
         memset(vis, 0, sizeof(bool)*height*width);
+        memset(pcolor, 0, sizeof(int)*height*width);
         Contour.clear();
         int num = 0;
         for(int i = 0; i < n; i++)
@@ -98,7 +99,7 @@ public:
                 if(color[cx*width+cy] == 0) zeroNum++;
             }
             //if the number of background pixel that joint this pixel more than 0, this pixel was considered a contour pixel
-            if(zeroNum > 0) isContour[i] = 1, num++;
+            if(zeroNum > 0) pcolor[i] = isContour[i] = 1, num++;
         }
         //cerr << "zeroNum ->" << num << endl;
         for(int i = 0; i < height; i++)
@@ -113,6 +114,7 @@ public:
         {
             for(int i = height-1; i >= 0; i--, printf("\n"))
                 for(int j = 0; j < width; j++)
+//                    printf("%c", ".#"[pcolor[i*width+j]]);
                     printf("%c", ".#"[isContour[i*width+j]]);
             printf("\n");
         }
@@ -121,7 +123,6 @@ public:
     bool getSegment(bool isPrint)
     {
         if(Contour.size() == 0) return false;
-        memset(pcolor, 0, sizeof(int)*height*width);
         contourSeg.clear();
         vector<PII> segment;
         const double PI = acos(-1.0);
@@ -147,6 +148,7 @@ public:
                 st = i;
             }
         }
+        if(st < Contour.size()-1) segment.push_back(PII(st, Contour.size()-1));
         st = 0;
         for(int i = 0; i < segment.size(); i++)
         {
@@ -170,8 +172,11 @@ public:
                 }
             }
         }
+        if(segment[st].first < segment[segment.size()-1].second)
+            contourSeg.push_back(PII(segment[st].first, segment[segment.size()-1].second));
         if(isPrint)
         {
+            memset(pcolor, 0, sizeof(int)*height*width);
             for(int i = 0; i < contourSeg.size(); i++)
                 for(int j = contourSeg[i].first; j <= contourSeg[i].second; j++)
                     pcolor[Contour[j]] = i % 7 + 1;
@@ -184,6 +189,18 @@ public:
                 }
         }
         return true;
+    }
+
+    void get256Color()
+    {
+        memset(pcolor, 0, sizeof(int)*height*width);
+        int idx = 0;
+        for(int i = 0; i < contourSeg.size(); i++, idx ++)
+            for(int j = contourSeg[i].first; j <= contourSeg[i].second; j++)
+                pcolor[Contour[j]] = idx%3+1;
+        for(int i = 0; i < n; i++)
+            if(pcolor[i] == 0) pcolor[i] = 255;
+            else pcolor[i]--;
     }
 };
 
