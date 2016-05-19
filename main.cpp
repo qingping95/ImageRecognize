@@ -88,7 +88,9 @@ void ContourDriver(char *input)
     formatToReal(data, ImageData, height, width, 1);
 
     ContourBaseThin Thin(data, height, width, b, f);
+    freopen("ContourBaseResult.txt", "w", stdout);
     Thin.getContourVector(true);
+    Thin.getSegment(true);
 
     delete []pColorTable;
     delete []ImageData;

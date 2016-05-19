@@ -115,7 +115,7 @@ public:
     #define CHECKWH(x, y) (x >= 0 && x < height && y >= 0 && y < width)
     bool judge(int x, int y, int *tc, int type)
     {
-        int dir[][2] = {{-1, 0}, {-1, 1}, {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}};
+        int dir[][2] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {-1, 1}, {1, 1}, {1, -1}, {-1, -1}};
         bool vis[322];
         vis[65] = 1; vis[5] = 1; vis[20] = 1;  vis[80] = 1; vis[13] = 1; vis[22] = 1;
         vis[52] = 1; vis[133] = 1; vis[141] = 1; vis[54] = 1;
