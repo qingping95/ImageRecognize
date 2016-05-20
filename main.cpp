@@ -41,7 +41,7 @@ void runUnite(ImageDsu &dsu, int n, int m, int K = 4);
 vector<int> getForeground(ImageDsu &Idsu, int Fore, int &mah, int &maw);
 
 // 对24位真彩图像做二值化处理
-void binaryzation();
+void binaryzation(char *input);
 
 //合并相近的分量
 bool uniteCom(ImageDsu &Idsu, vector<int> v, int &mah, int &maw, bool use);
@@ -67,8 +67,8 @@ int main()
     //runOCR
     //if(runOCR()) return 0;
 
-    //run binaryzation()
-    //binaryzation();
+    //run binaryzation
+    //binaryzation("EF.bmp");
 
     //run cutImage()
     //cutImage();
@@ -88,34 +88,35 @@ void ContourDriver(char *input)
     formatToReal(data, ImageData, height, width, 1);
 
     ContourBaseThin Thin(data, height, width, b, f);
+
     freopen("GB1000_R-rs.txt", "w", stdout);
     Thin.getContourVector(true);
 
     //code for saving image
-//    for(int i = 0; i < height*width; i++)
-//        data[i] = !Thin.pcolor[i];
-//    realToFormat(ImageData, data, height, width, 1);
-//    saveBmp("GB1000_R-Contour.bmp", ImageData, width, height, 1, pColorTable);
+    for(int i = 0; i < height*width; i++)
+        data[i] = !Thin.pcolor[i];
+    realToFormat(ImageData, data, height, width, 1);
+    saveBmp("GB1000_R-Contour.bmp", ImageData, width, height, 1, pColorTable);
 
-    Thin.getSegment(true);
+    Thin.getSegment(false);
     fclose(stdout);
     freopen("CON", "w", stdout);
 
     //code for saving image
-//    cout<<"saving"<<endl;
-//    lineByte = calLineByte(width, 8);
-//    unsigned char* newData = new unsigned char[height*lineByte];
-//    Thin.get256Color();
-//    for(int i = 0;i < height*width; i++)
-//        data[i] = Thin.pcolor[i];
-//    realToFormat(newData, data, height, width, 8);
-//    RGBQUAD* newColorTable = new RGBQUAD[256];
-//    for(int i = 0; i < 256; i++)
-//        newColorTable[i].rgbBlue = newColorTable[i].rgbGreen = newColorTable[i].rgbRed = i;
-//    newColorTable[0].rgbBlue = 255, newColorTable[0].rgbGreen = newColorTable[0].rgbRed = 0;
-//    newColorTable[1].rgbGreen = 255, newColorTable[1].rgbBlue = newColorTable[1].rgbRed = 0;
-//    newColorTable[2].rgbRed = 255, newColorTable[2].rgbGreen = newColorTable[2].rgbBlue = 0;
-//    saveBmp("GB5_R-rs.bmp", newData, width, height, 8, newColorTable);
+    cout<<"saving"<<endl;
+    lineByte = calLineByte(width, 8);
+    unsigned char* newData = new unsigned char[height*lineByte];
+    Thin.get256Color();
+    for(int i = 0;i < height*width; i++)
+        data[i] = Thin.pcolor[i];
+    realToFormat(newData, data, height, width, 8);
+    RGBQUAD* newColorTable = new RGBQUAD[256];
+    for(int i = 0; i < 256; i++)
+        newColorTable[i].rgbBlue = newColorTable[i].rgbGreen = newColorTable[i].rgbRed = i;
+    newColorTable[0].rgbBlue = 255, newColorTable[0].rgbGreen = newColorTable[0].rgbRed = 0;
+    newColorTable[1].rgbGreen = 255, newColorTable[1].rgbBlue = newColorTable[1].rgbRed = 0;
+    newColorTable[2].rgbRed = 255, newColorTable[2].rgbGreen = newColorTable[2].rgbBlue = 0;
+    saveBmp("GB1000_R-rs.bmp", newData, width, height, 8, newColorTable);
 
     delete []newColorTable;
     delete []newData;
@@ -369,12 +370,11 @@ bool runOCR()
     }
     return true;
 }
-void binaryzation()
+void binaryzation(char *input)
 {
     int height, width, biBitCount;
-    char input[] = "self-test.bmp";
-    char outputGray[] = "gray-self.bmp";
-    char outputBit[] = "bit-self.bmp";
+    char outputGray[] = "gray-EF.bmp";
+    char outputBit[] = "bit-EF.bmp";
 
     int b, f;
     unsigned char *ImageData; //图像数据
@@ -389,7 +389,7 @@ void binaryzation()
     unsigned char *gray = new unsigned char[height * lineByte8];
     if(biBitCount == 24) rgb2gray(gray, ImageData, height, width);
 
-    realToFormat(ImageData, gray, height, lineByte8, 8);
+    realToFormat(ImageData, gray, height, width, 8);
 //    if(pColorTable) delete []pColorTable;
     pColorTable = new RGBQUAD[256];
     for(int i = 0; i < 256; i++)
@@ -399,7 +399,7 @@ void binaryzation()
     int lineByte2 = calLineByte(width, 1);
     unsigned char *bmp = new unsigned char[height*lineByte8];
     OTSU(bmp, gray, height, lineByte8);
-    realToFormat(ImageData, bmp, height, lineByte8, 1);
+    realToFormat(ImageData, bmp, height, width, 1);
     pColorTable[1] = pColorTable[255];
     saveBmp(outputBit, ImageData, width, height, 1, pColorTable);
 
@@ -458,7 +458,7 @@ void cutImage()
 //    //转换给ImageData
     Idsu.exportAttr(realData);
 
-    realToFormat(ImageData, realData, height, realWidth, biBitCount);
+    realToFormat(ImageData, realData, height, width, biBitCount);
 
     saveBmp(output, ImageData, width, height, biBitCount, pColorTable);
 

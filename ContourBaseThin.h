@@ -21,6 +21,7 @@ public:
     bool *isContour;
     int *color;
     int *pcolor;
+    int *medial;
     double *theta;
     double *dTheta;
     bool *vis;
@@ -38,6 +39,7 @@ public:
         theta = new double[h*w];
         dTheta = new double[h*w];
         pcolor = new int[h*w];
+        medial = new int[h*w];
         color = new int[h*w];
         vis = new bool[h*w];
         for(int i = 0; i < n; i++)
@@ -50,6 +52,7 @@ public:
         delete []pcolor;
         delete []theta;
         delete []dTheta;
+        delete []medial;
         delete []isContour;
         delete []color;
     }
@@ -102,7 +105,7 @@ public:
             if(zeroNum > 0) pcolor[i] = isContour[i] = 1, num++;
         }
         //cerr << "zeroNum ->" << num << endl;
-        for(int i = 0; i < height; i++)
+        for(int i = height-1; i >= 0; i--)
             for(int j = 0; j < width; j++)
                 if(isContour[i*width+j] && vis[i*width+j] == 0)
                     vis[i*width+j] = 1, dfs(i, j);
@@ -149,11 +152,27 @@ public:
             }
         }
         if(st < Contour.size()-1) segment.push_back(PII(st, Contour.size()-1));
+        for(int i = 0; i < segment.size(); i++)
+        {
+            for(int j = segment[i].first; j <= segment[i].second; j++)
+            {
+                pcolor[Contour[j]] = i%3+1;
+            }
+        }
+        for(int i = 0; i < n; i++)
+            if(pcolor[i] == 0) pcolor[i] = 255;
+            else pcolor[i]--;
+//        for(int i = height-1; i >= 0; i--, printf("\n"))
+//            for(int j = 0; j < width; j++)
+//            {
+//                if(pcolor[i*width+j] == 0) printf(".");
+//                else printf("%d", pcolor[i*width+j]);
+//            }
         st = 0;
         for(int i = 0; i < segment.size(); i++)
         {
-            double diff = dTheta[segment[i].second] - dTheta[segment[i].first];
-            if(diff > (10.0/180*PI) || diff < (10.0/180*PI)) {
+            double diff = theta[segment[i].second] - theta[segment[st].first];
+            if(diff > (10.0/180*PI) || diff < (-10.0/180*PI)) {
                 if(i > st){
                     contourSeg.push_back(PII(segment[st].first, segment[i-1].second));
                     st = i;
@@ -161,10 +180,11 @@ public:
                 }else{
                     for(int j = segment[i].first+1; j <= segment[i].second; j++)
                     {
-                        diff = dTheta[j] - dTheta[segment[i].first];
+                        diff = theta[j] - theta[segment[st].first];
                         if(diff > (10.0/180*PI) || diff < (-10.0/180*PI)){
                             contourSeg.push_back(PII(segment[st].first, j-1));
-                            segment[st].first = j;
+                            segment[i].first = j;
+                            st = i;
                             i--;
                             break;
                         }
@@ -201,6 +221,50 @@ public:
         for(int i = 0; i < n; i++)
             if(pcolor[i] == 0) pcolor[i] = 255;
             else pcolor[i]--;
+    }
+    double getAvgD(int x)
+    {
+        int num = 0;
+        double res = 0;
+        int sx = Contour[x] / width;
+        int sy = Contour[x] % width;
+        for(int i = max(0, x - 5)); i <= min(Contour.size(), x+5); i++, num++)
+        {
+            int cx = Contour[i] / width;
+            int cy = Contour[i] % width;
+            res += atan2(1.0*(cy - sy), cx - sx);
+        }
+        return res / num;
+    }
+    void getMedialAxis()
+    {
+        memset(vis, 0, sizeof(bool )*height*width);
+        memset(medial, 0, sizeof(int)*height*width);
+        for(int i = 0; i < contourSeg.size(); i ++)
+            for(int j = contourSeg[i].first; j <= contourSeg[i].second; j++)
+            {
+                pcolor[j] = i+1;
+            }
+        for(int i = 0; i < contourSeg.size(); i ++)
+            for(int j = contourSeg[i].first; j <= contourSeg[i].second; j++)
+            {
+                if(vis[j]) continue;
+                vis[j] = 1;
+                double stAvg = getAvgD(j);
+                double ppAvg = 1/stAvg;
+                int sx = contourSeg[j] / width;
+                int sy = contourSeg[j] % width;
+                int cx = sx+1;
+                double cy += ppAvg;
+                while(cx < width && sign(cy - height) < 0)
+                {
+                    int ry = ceil(cy);
+                    if(ry < height || isCon){
+                        if(isContour[cx*])
+
+                    }
+                }
+            }
     }
 };
 
