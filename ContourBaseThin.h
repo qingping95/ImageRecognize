@@ -16,9 +16,38 @@
 typedef pair<int, int> PII;
 int dir[][2] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {-1, 1}, {1, 1}, {1, -1}, {-1, -1}};
 
+struct Point
+{
+    double x,y;
+    Point(double x = 0, double y = 0):x(x),y(y){}
+    void read()
+    {
+        scanf("%lf%lf", &x, &y);
+    }
+};
+const double eps = 1e-10;
+const double PI = acos(-1.0);
+typedef Point Vector;
+int dcmp(double x){if(fabs(x) < eps) return 0;else return x<0?-1:1;}
+Vector operator+(Vector A,Vector B){return Vector(A.x+B.x, A.y+B.y);}
+Vector operator-(Point A,Point B){return Vector(A.x-B.x, A.y-B.y);}
+Vector operator*(Vector A, double p){return Vector(A.x*p, A.y*p);}
+Vector operator/(Vector A, double p){return Vector(A.x/p, A.y/p);}
+bool operator<(const Point& a, const Point& b){return a.x<b.x || (a.x == b.x && a.y < b.y);}
+bool operator==(const Point& a, const Point& b){return dcmp(a.x-b.x) == 0 && dcmp(a.y-b.y) == 0;}
+double angle(Vector A){return atan2(A.y,A.x);}//返回A向量的极角
+double Dot(Vector A, Vector B){return A.x*B.x+A.y*B.y;}
+double Length(Vector A){return sqrt(Dot(A,A));}
+double Angle(Vector A,Vector B)
+{
+    double d=Dot(A,B)/Length(A)/Length(B);
+    if(dcmp(d-1)==0) return 0;
+    if(dcmp(d+1)==0) return PI;
+    return acos(d);
+}//A到B的逆时针转的角
 class ContourBaseThin{
 public:
-    bool *isContour;
+    int *isContour;
     int *color;
     int *pcolor;
     int *medial;
@@ -26,6 +55,7 @@ public:
     double *dTheta;
     bool *vis;
     int width, height, n;
+    int penWidth;
     int BACK,FORE;
     vector<int > Contour;
     vector<PII > contourSeg;
@@ -35,7 +65,7 @@ public:
         BACK = b, FORE = f;
         width = w, height = h;
         n = h*w;
-        isContour = new bool[h*w];
+        isContour = new int[h*w];
         theta = new double[h*w];
         dTheta = new double[h*w];
         pcolor = new int[h*w];
@@ -66,13 +96,14 @@ public:
     {
         //DEBUG(x*width+y);
         Contour.push_back(x*width+y);
+        isContour[x*width+y] = Contour.size();
         for(int i = 0; i < 8; i++)
         {
             int cx = x + dir[i][0];
             int cy = y + dir[i][1];
             if(!CHECKWH(cx, cy)) continue;
             if(vis[cx*width+cy]) continue;
-            if(!isContour[cx*width+cy]) continue;
+            if(isContour[cx*width+cy] == 0) continue;
             vis[cx*width+cy] = 1;
             dfs(cx, cy);
         }
@@ -107,7 +138,7 @@ public:
         //cerr << "zeroNum ->" << num << endl;
         for(int i = height-1; i >= 0; i--)
             for(int j = 0; j < width; j++)
-                if(isContour[i*width+j] && vis[i*width+j] == 0)
+                if(isContour[i*width+j] > 0 && vis[i*width+j] == 0)
                     vis[i*width+j] = 1, dfs(i, j);
 
         //cerr << "zeroNum ->" << num << endl;
@@ -115,14 +146,14 @@ public:
         DEBUG(Contour.size());
         if(isPrint)
         {
+            printf("this is Contour image:\n");
             for(int i = height-1; i >= 0; i--, printf("\n"))
                 for(int j = 0; j < width; j++)
 //                    printf("%c", ".#"[pcolor[i*width+j]]);
-                    printf("%c", ".#"[isContour[i*width+j]]);
+                    printf("%c", ".#"[isContour[i*width+j] > 0]);
             printf("\n");
         }
     }
-
     bool getSegment(bool isPrint)
     {
         if(Contour.size() == 0) return false;
@@ -228,7 +259,7 @@ public:
         double res = 0;
         int sx = Contour[x] / width;
         int sy = Contour[x] % width;
-        for(int i = max(0, x - 5)); i <= min(Contour.size(), x+5); i++, num++)
+        for(int i = max(0, x - 5); i < min((int)Contour.size(), x+5); i++, num++)
         {
             int cx = Contour[i] / width;
             int cy = Contour[i] % width;
@@ -236,37 +267,71 @@ public:
         }
         return res / num;
     }
-    void getMedialAxis()
+    void getMedialAxis(bool isPrint)
     {
         memset(vis, 0, sizeof(bool )*height*width);
         memset(medial, 0, sizeof(int)*height*width);
         for(int i = 0; i < contourSeg.size(); i ++)
             for(int j = contourSeg[i].first; j <= contourSeg[i].second; j++)
             {
-                pcolor[j] = i+1;
+                pcolor[Contour[j]] = i+1;
             }
-        for(int i = 0; i < contourSeg.size(); i ++)
-            for(int j = contourSeg[i].first; j <= contourSeg[i].second; j++)
-            {
-                if(vis[j]) continue;
-                vis[j] = 1;
-                double stAvg = getAvgD(j);
-                double ppAvg = 1/stAvg;
-                int sx = contourSeg[j] / width;
-                int sy = contourSeg[j] % width;
-                int cx = sx+1;
-                double cy += ppAvg;
-                while(cx < width && sign(cy - height) < 0)
-                {
-                    int ry = ceil(cy);
-                    if(ry < height || isCon){
-                        if(isContour[cx*])
+//        for(int i = 0; i < contourSeg.size(); i ++)
+//            for(int j = contourSeg[i].first; j <= contourSeg[i].second; j++)
+        for(int i = 0; i < Contour.size(); i++)
+        {
 
+            if(vis[i]) continue;
+            vis[i] = 1;
+
+            double stAvg = getAvgD(i);
+            double dirK = 1/stAvg;
+//                int oriPos = contourSeg[j];
+            int sx = Contour[i] / width;
+            int sy = Contour[i] % width;
+            int add = 1;
+            int cx = sx+add;
+            double cy = dirK + sy;
+            if(color[cx * width + (int)(cy+0.5)] == 0) {
+                add = -add;
+                dirK = -dirK;
+                cx = sx + add;
+                cy = sy + dirK;
+            }
+
+            while(cx >= 0 && cx < width && sign(cy - height) < 0 && sign(cy) >= 0)
+            {
+                int ry = cy+0.5;
+                if(ry < height && ry >= 0)
+                {
+                    if(isContour[cx*width+ry] > 0)
+                    {
+                        double peAvg = getAvgD(isContour[cx*width+ry] - 1);
+                        if(abs(Angle(Vector(1, peAvg), Vector(1, stAvg))) < 10.0/180*PI
+                            && sign(Length(Vector(sx, sy) - Vector(cx, ry)) - 1.4*penWidth) < 0)
+                        {
+                            int mx = (sx+cx)*1.0/2+0.5;
+                            int my = (sy+cy)*1.0/2+0.5;
+                            medial[mx*width+my] = 1;
+                        }
+                        break;
                     }
                 }
+                cx += add;
+                cy += dirK;
             }
+        }
+        if(isPrint)
+        {
+            printf("Medial axis image is :\n");
+            for(int i = 0; i < n; i++)
+                if(medial[i] || isContour[i]) pcolor[i] = 1;
+                else pcolor[i] = 0;
+            for(int i = height-1; i >= 0; i--, printf("\n"))
+                for(int j = 0; j < width; j++)
+                    printf("%c", ".#"[pcolor[i*width+j]]);
+        }
     }
 };
-
 
 #endif // CONTOURBASETHIN_H_INCLUDED

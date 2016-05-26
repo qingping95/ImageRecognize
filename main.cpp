@@ -56,12 +56,29 @@ int runZhang(unsigned char *data, int height, int width, int b, int f, bool isSa
 
 
 //Self Algorithm
-void selfThinningDriver(char *input);
+//return the pen width
+int selfThinningDriver(char *input);
 void selfThinning(int* data, int n, int m, int d);
 
 //Contour-Based Thinning
 void ContourDriver(char *input);
 
+void printLine()
+{
+    double k = 2.0/3;
+    int color[111][111];
+    memset(color, 0, sizeof(color));
+    for(int i = 0; i < 111; i++)
+    {
+        int y = (k*i+0.5);
+        color[i][y] = 1;
+    }
+    for(int i = 0;i < 111; i++, printf("\n"))
+        for(int j = 0; j < 111; j++)
+    {
+        printf("%c", ".#"[color[i][j]]);
+    }
+}
 int main()
 {
     //runOCR
@@ -72,8 +89,9 @@ int main()
 
     //run cutImage()
     //cutImage();
-//    selfThinningDriver("GB1000_R.bmp");
-    ContourDriver("GB1000_R.bmp");
+//    selfThinningDriver("EF.bmp");
+//    printLine();
+    ContourDriver("EF.bmp");
     return 0;
 }
 typedef pair<int, int> PII;
@@ -88,43 +106,46 @@ void ContourDriver(char *input)
     formatToReal(data, ImageData, height, width, 1);
 
     ContourBaseThin Thin(data, height, width, b, f);
-
-    freopen("GB1000_R-rs.txt", "w", stdout);
+    Thin.penWidth = selfThinningDriver(input);
+    freopen("EF-rs.txt", "w", stdout);
     Thin.getContourVector(true);
 
     //code for saving image
     for(int i = 0; i < height*width; i++)
         data[i] = !Thin.pcolor[i];
     realToFormat(ImageData, data, height, width, 1);
-    saveBmp("GB1000_R-Contour.bmp", ImageData, width, height, 1, pColorTable);
+    saveBmp("EF-Contour.bmp", ImageData, width, height, 1, pColorTable);
 
     Thin.getSegment(false);
+    Thin.getMedialAxis(true);
     fclose(stdout);
     freopen("CON", "w", stdout);
 
     //code for saving image
-    cout<<"saving"<<endl;
-    lineByte = calLineByte(width, 8);
-    unsigned char* newData = new unsigned char[height*lineByte];
-    Thin.get256Color();
-    for(int i = 0;i < height*width; i++)
-        data[i] = Thin.pcolor[i];
-    realToFormat(newData, data, height, width, 8);
-    RGBQUAD* newColorTable = new RGBQUAD[256];
-    for(int i = 0; i < 256; i++)
-        newColorTable[i].rgbBlue = newColorTable[i].rgbGreen = newColorTable[i].rgbRed = i;
-    newColorTable[0].rgbBlue = 255, newColorTable[0].rgbGreen = newColorTable[0].rgbRed = 0;
-    newColorTable[1].rgbGreen = 255, newColorTable[1].rgbBlue = newColorTable[1].rgbRed = 0;
-    newColorTable[2].rgbRed = 255, newColorTable[2].rgbGreen = newColorTable[2].rgbBlue = 0;
-    saveBmp("GB1000_R-rs.bmp", newData, width, height, 8, newColorTable);
+//    cout<<"saving"<<endl;
+//    lineByte = calLineByte(width, 8);
+//    unsigned char* newData = new unsigned char[height*lineByte];
+//    Thin.get256Color();
+//    for(int i = 0;i < height*width; i++)
+//        data[i] = Thin.pcolor[i];
+//    realToFormat(newData, data, height, width, 8);
+//    RGBQUAD* newColorTable = new RGBQUAD[256];
+//    for(int i = 0; i < 256; i++)
+//        newColorTable[i].rgbBlue = newColorTable[i].rgbGreen = newColorTable[i].rgbRed = i;
+//    newColorTable[0].rgbBlue = 255, newColorTable[0].rgbGreen = newColorTable[0].rgbRed = 0;
+//    newColorTable[1].rgbGreen = 255, newColorTable[1].rgbBlue = newColorTable[1].rgbRed = 0;
+//    newColorTable[2].rgbRed = 255, newColorTable[2].rgbGreen = newColorTable[2].rgbBlue = 0;
+//    saveBmp("EF-rs.bmp", newData, width, height, 8, newColorTable);
 
-    delete []newColorTable;
-    delete []newData;
+
+
+//    delete []newColorTable;
+//    delete []newData;
     delete []pColorTable;
     delete []ImageData;
     delete []data;
 }
-void selfThinningDriver(char *input)
+int selfThinningDriver(char *input)
 {
     int height, width, biBitCount;
     unsigned char *ImageData; //Í¼ÏñÊý¾Ý
@@ -140,18 +161,19 @@ void selfThinningDriver(char *input)
 
     int d = runZhang(data, height, width, b, f, 1);
     DEBUG(d);
-    int *BW = new int[height*width];
-    for(int i = 0; i < height*width; i++)
-    {
-        BW[i] = (data[i] == f);
-    }
+//    int *BW = new int[height*width];
+//    for(int i = 0; i < height*width; i++)
+//    {
+//        BW[i] = (data[i] == f);
+//    }
 
-    selfThinning(BW, height, width, d);
+    //selfThinning(BW, height, width, d);
 
-    delete []BW;
+//    delete []BW;
     delete []pColorTable;
     delete []ImageData;
     delete []data;
+    return d;
 }
 void selfThinning(int* data, int n, int m, int d)
 {
@@ -159,7 +181,7 @@ void selfThinning(int* data, int n, int m, int d)
     printf("initial :\n");
     printImage(data, n, m);
 //    int LOW_LIMIT = 5;
-    int LOW_LIMIT = d/2-5;
+    int LOW_LIMIT = max(1, d/2-5);
     cerr<<"LOW_LIMIT -> "<<LOW_LIMIT<<endl;
     priority_queue<PII, vector<PII >, greater<PII > > que;
 
@@ -254,7 +276,7 @@ int runZhang(unsigned char *data, int height, int width, int b, int f, bool isSa
 
     //run algorithm
     solver.runZhangThinning();
-    printf("\nafter thinning£º\n");
+    printf("\nafter thinning:\n");
     solver.printToScreen(solver.color);
     if(isSave){
         unsigned char *sData = new unsigned char[height*width];
@@ -265,7 +287,7 @@ int runZhang(unsigned char *data, int height, int width, int b, int f, bool isSa
                 sData[i*width+j] = solver.color[i*width+j] == 1 ? solver.FORE : solver.BACK;
 
         realToFormat(formatData, sData, height, width, 1);
-        saveBmp("ZhangResult/GB1000_R.bmp", formatData, width, height, 1, pColorTable);
+        saveBmp("ZhangResult/EF.bmp", formatData, width, height, 1, pColorTable);
         delete []sData;
         delete []formatData;
     }
