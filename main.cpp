@@ -108,34 +108,36 @@ void ContourDriver(char *input)
     ContourBaseThin Thin(data, height, width, b, f);
     Thin.penWidth = selfThinningDriver(input);
     freopen("EF-rs.txt", "w", stdout);
-    Thin.getContourVector(true);
+    Thin.getContourVector(false);
 
     //code for saving image
     for(int i = 0; i < height*width; i++)
-        data[i] = !Thin.pcolor[i];
+        data[i] = (Thin.pcolor[i]==f);
+    pColorTable[0].rgbBlue = pColorTable[0].rgbGreen = pColorTable[0].rgbRed = 0;
+    pColorTable[1].rgbBlue = pColorTable[1].rgbGreen = pColorTable[1].rgbRed = 255;
     realToFormat(ImageData, data, height, width, 1);
     saveBmp("EF-Contour.bmp", ImageData, width, height, 1, pColorTable);
 
-    Thin.getSegment(false);
-    Thin.getMedialAxis(true);
+    Thin.getSegmentDriver(true);
+//    Thin.getMedialAxis(true);
     fclose(stdout);
     freopen("CON", "w", stdout);
 
     //code for saving image
-//    cout<<"saving"<<endl;
-//    lineByte = calLineByte(width, 8);
-//    unsigned char* newData = new unsigned char[height*lineByte];
-//    Thin.get256Color();
-//    for(int i = 0;i < height*width; i++)
-//        data[i] = Thin.pcolor[i];
-//    realToFormat(newData, data, height, width, 8);
-//    RGBQUAD* newColorTable = new RGBQUAD[256];
-//    for(int i = 0; i < 256; i++)
-//        newColorTable[i].rgbBlue = newColorTable[i].rgbGreen = newColorTable[i].rgbRed = i;
-//    newColorTable[0].rgbBlue = 255, newColorTable[0].rgbGreen = newColorTable[0].rgbRed = 0;
-//    newColorTable[1].rgbGreen = 255, newColorTable[1].rgbBlue = newColorTable[1].rgbRed = 0;
-//    newColorTable[2].rgbRed = 255, newColorTable[2].rgbGreen = newColorTable[2].rgbBlue = 0;
-//    saveBmp("EF-rs.bmp", newData, width, height, 8, newColorTable);
+    cout<<"saving"<<endl;
+    lineByte = calLineByte(width, 8);
+    unsigned char* newData = new unsigned char[height*lineByte];
+    Thin.get256Color();
+    for(int i = 0;i < height*width; i++)
+        data[i] = Thin.pcolor[i];
+    realToFormat(newData, data, height, width, 8);
+    RGBQUAD* newColorTable = new RGBQUAD[256];
+    for(int i = 0; i < 256; i++)
+        newColorTable[i].rgbBlue = newColorTable[i].rgbGreen = newColorTable[i].rgbRed = i;
+    newColorTable[0].rgbBlue = 255, newColorTable[0].rgbGreen = newColorTable[0].rgbRed = 0;
+    newColorTable[1].rgbGreen = 255, newColorTable[1].rgbBlue = newColorTable[1].rgbRed = 0;
+    newColorTable[2].rgbRed = 255, newColorTable[2].rgbGreen = newColorTable[2].rgbBlue = 0;
+    saveBmp("EF-rs.bmp", newData, width, height, 8, newColorTable);
 
 
 

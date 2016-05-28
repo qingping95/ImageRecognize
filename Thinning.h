@@ -78,7 +78,7 @@ public:
             run = false;
 
             cas++;
-            cerr<<"there are "<<cas<<" times sprint"<<endl;
+            cerr<<"there are "<<cas<<" sprints"<<endl;
 
             //sprint one
             for(int i = 0; i < height; i++)
