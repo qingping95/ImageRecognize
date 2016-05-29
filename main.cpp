@@ -91,7 +91,7 @@ int main()
     //cutImage();
 //    selfThinningDriver("EF.bmp");
 //    printLine();
-    ContourDriver("EF.bmp");
+    ContourDriver("GB1000_R.bmp");
     return 0;
 }
 typedef pair<int, int> PII;
@@ -107,7 +107,8 @@ void ContourDriver(char *input)
 
     ContourBaseThin Thin(data, height, width, b, f);
     Thin.penWidth = selfThinningDriver(input);
-    freopen("EF-rs.txt", "w", stdout);
+    DEBUG(Thin.penWidth);
+    freopen("GB1000_R-rs.txt", "w", stdout);
     Thin.getContourVector(false);
 
     //code for saving image
@@ -116,10 +117,10 @@ void ContourDriver(char *input)
     pColorTable[0].rgbBlue = pColorTable[0].rgbGreen = pColorTable[0].rgbRed = 0;
     pColorTable[1].rgbBlue = pColorTable[1].rgbGreen = pColorTable[1].rgbRed = 255;
     realToFormat(ImageData, data, height, width, 1);
-    saveBmp("EF-Contour.bmp", ImageData, width, height, 1, pColorTable);
+    saveBmp("GB1000_R-Contour.bmp", ImageData, width, height, 1, pColorTable);
 
-    Thin.getSegmentDriver(true);
-//    Thin.getMedialAxis(true);
+    Thin.getSegmentDriver(false);
+    Thin.getMedialAxis(true);
     fclose(stdout);
     freopen("CON", "w", stdout);
 
@@ -137,7 +138,7 @@ void ContourDriver(char *input)
     newColorTable[0].rgbBlue = 255, newColorTable[0].rgbGreen = newColorTable[0].rgbRed = 0;
     newColorTable[1].rgbGreen = 255, newColorTable[1].rgbBlue = newColorTable[1].rgbRed = 0;
     newColorTable[2].rgbRed = 255, newColorTable[2].rgbGreen = newColorTable[2].rgbBlue = 0;
-    saveBmp("EF-rs.bmp", newData, width, height, 8, newColorTable);
+    saveBmp("GB1000_R-rs.bmp", newData, width, height, 8, newColorTable);
 
 
 

@@ -158,7 +158,14 @@ public:
             printf("\n");
         }
     }
-
+    double getK(Vector A)
+    {
+        double ang = angle(A);
+        if(ang > PI/2) ang -= PI;
+        if(ang < -PI/2) ang += PI;
+        if(abs(ang - PI/2) < 1e-4) ang -= PI;
+        return ang;
+    }
     int getSegmentEndPoint(int stidx)
     {
 //        DEBUG(stidx);
@@ -171,7 +178,7 @@ public:
         {
             int cx = Contour[i] / width;
             int cy = Contour[i] % width;
-            theta[i] = angle(Vector(cx - sx, cy - sy));
+            theta[i] = getK(Vector(cx - sx, cy - sy));
             if(i>stidx+1) dTheta[i] = theta[i] - theta[i-1];
         }
         int st = stidx+1;
@@ -250,6 +257,7 @@ public:
             if(pcolor[i] == 0) pcolor[i] = 255;
             else pcolor[i]--;
     }
+    //return the angle of pixel position x
     double getAvgD(int x)
     {
         int num = 0;
@@ -260,7 +268,10 @@ public:
         {
             int cx = Contour[i] / width;
             int cy = Contour[i] % width;
-            if(segIdx[Contour[i]] == segIdx[Contour[x]) res += atan2(1.0*(cy - sy), cx - sx), num++;
+            if(i == x) continue;
+            if(segIdx[Contour[i]] == segIdx[Contour[x]]){
+                res += getK(Vector(cx - sx, cy - sy)), num++;
+            }
         }
         return res / num;
     }
@@ -285,7 +296,7 @@ public:
             double stDir;
             int add;
             double dirK;
-            if(Sign(stAvg) != 0) add = 0, dirK = 1;
+            if(Sign(stAvg) == 0) add = 0, dirK = 1;
             else if(Sign(stAvg - PI/2) == 0) add = 1, dirK = 0;
             else add = 1, dirK = 1/tan(stAvg);
 //                int oriPos = contourSeg[j];
@@ -299,23 +310,44 @@ public:
                 cx = sx + add;
                 cy = sy + dirK;
             }
-
+            if(sx == 373 && sy == 433)
+            {
+                DEBUG(add);
+                DEBUG(dirK);
+            }
             while(cx >= 0 && cx < height && Sign(cy - width) < 0 && Sign(cy) >= 0)
             {
                 int ry = cy+0.5;
-                if(ry < height && ry >= 0)
+                if(color[cx*width+ry] == 0) break;
+//                if(sx == 373 && sy == 433)
+//                {
+//                    DEBUG(cx);
+//                    DEBUG(ry);
+//                    DEBUG(isContour[cx*width+ry]);
+//                }
+                if(ry < width && ry >= 0)
                 {
                     if(isContour[cx*width+ry] > 0)
                     {
                         double peAvg = getAvgD(isContour[cx*width+ry] - 1);
-                        if(abs(Angle(Vector(1, peAvg), Vector(1, stAvg))) < 10.0
-                            && Sign(Length(Vector(sx, sy) - Vector(cx, ry)) - 1.4*penWidth) < 0)
+//                        if(true
+                        int mx, my;
+                        if(abs(peAvg - stAvg) < 20.0*PI/180
+                            && Sign(Length(Vector(sx, sy) - Vector(cx, ry)) - 2.0*penWidth) < 0)
                         {
-                            int mx = (sx+cx)*1.0/2+0.5;
-                            int my = (sy+cy)*1.0/2+0.5;
+                            mx = (sx+cx)*1.0/2+0.5;
+                            my = (sy+cy)*1.0/2+0.5;
                             medial[mx*width+my] = 1;
                             getNum++;
                         }
+                        if(mx == 295 && my == 410)
+                        {
+                            DEBUG(sx);
+                            DEBUG(sy);
+                            DEBUG(cx);
+                            DEBUG(ry);
+                        }
+
                         break;
                     }
                 }
