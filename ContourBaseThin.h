@@ -186,6 +186,7 @@ public:
         {
             if(Sign(dTheta[i]) != Sign(dTheta[i-1]))
             {
+                //cerr<<"segment.size() -> "<<segment.size()<<endl;
                 segment.push_back(PII(st, i-1));
                 st = i;
             }
@@ -217,6 +218,7 @@ public:
         contourSeg.clear();
 
         int st = 0;
+        cerr<<"Contour.size() -> "<< (Contour.size())<<endl;
         while(st < Contour.size())
         {
             int tmp = getSegmentEndPoint(st);
@@ -253,9 +255,11 @@ public:
         for(int i = 0; i < contourSeg.size(); i++, idx ++)
             for(int j = contourSeg[i].first; j < contourSeg[i].second; j++)
                 pcolor[Contour[j]] = idx%3+1;
-        for(int i = 0; i < n; i++)
+        for(int i = 0; i < n; i++){
             if(pcolor[i] == 0) pcolor[i] = 255;
-            else pcolor[i]--;
+            else ;
+//            if(isContour[i] == 0 && medial[i]) pcolor[i] = 0;
+        }
     }
     //return the angle of pixel position x
     double getAvgD(int x)
@@ -281,12 +285,13 @@ public:
         memset(vis, 0, sizeof(bool )*height*width);
         memset(medial, 0, sizeof(int)*height*width);
         for(int i = 0; i < contourSeg.size(); i ++)
-            for(int j = contourSeg[i].first; j <= contourSeg[i].second; j++)
+            for(int j = contourSeg[i].first; j < contourSeg[i].second; j++)
             {
                 pcolor[Contour[j]] = i+1;
             }
 //        for(int i = 0; i < contourSeg.size(); i ++)
 //            for(int j = contourSeg[i].first; j <= contourSeg[i].second; j++)
+        cerr <<"MARK!!!!!!!!!!"<<endl;
         for(int i = 0; i < Contour.size(); i++)
         {
             if(vis[i]) continue;
@@ -302,50 +307,59 @@ public:
 //                int oriPos = contourSeg[j];
             int sx = Contour[i] / width;
             int sy = Contour[i] % width;
-            int cx = sx+add;
+            if(fabs(dirK) > 1.1) add /= dirK, dirK /= dirK;
+            double cx = sx+add;
             double cy = dirK + sy;
-            if(color[cx * width + (int)(cy+0.5)] == 0) {
+            double ccx = cx+add;
+            double ccy = cy + dirK;
+            if(color[(int)(cx+0.5) * width + (int)(cy+0.5)] == 0 || color[(int)(cx+0.5) * width + (int)(ccy+0.5)] == 0) {
                 add = -add;
                 dirK = -dirK;
                 cx = sx + add;
                 cy = sy + dirK;
             }
-            if(sx == 373 && sy == 433)
+            if(sx == 44 && sy == 206)
             {
                 DEBUG(add);
                 DEBUG(dirK);
             }
-            while(cx >= 0 && cx < height && Sign(cy - width) < 0 && Sign(cy) >= 0)
+            int num = 0;
+            while(Sign(cx) >= 0 && Sign(cx - height) < 0 && Sign(cy - width) < 0 && Sign(cy) >= 0)
             {
+                num++;
+                int rx = cx+0.5;
                 int ry = cy+0.5;
-                if(color[cx*width+ry] == 0) break;
-//                if(sx == 373 && sy == 433)
+                if(color[rx*width+ry] == 0) break;
+//                if(sx == 37 && sy == 143)
 //                {
-//                    DEBUG(cx);
+//                    DEBUG(add);
+//                    DEBUG(dirK);
+//                    DEBUG(rx);
 //                    DEBUG(ry);
-//                    DEBUG(isContour[cx*width+ry]);
 //                }
-                if(ry < width && ry >= 0)
+                if(ry < width && ry >= 0 && num > 3)
                 {
-                    if(isContour[cx*width+ry] > 0)
+                    if(isContour[rx*width+ry] > 0)
                     {
-                        double peAvg = getAvgD(isContour[cx*width+ry] - 1);
+                        double peAvg = getAvgD(isContour[rx*width+ry] - 1);
 //                        if(true
                         int mx, my;
-                        if(abs(peAvg - stAvg) < 20.0*PI/180
-                            && Sign(Length(Vector(sx, sy) - Vector(cx, ry)) - 2.0*penWidth) < 0)
+                        if(abs(peAvg - stAvg) < 14.0*PI/180
+                            && Sign(Length(Vector(sx, sy) - Vector(rx, ry)) - 2.0*penWidth) < 0)
                         {
                             mx = (sx+cx)*1.0/2+0.5;
                             my = (sy+cy)*1.0/2+0.5;
                             medial[mx*width+my] = 1;
                             getNum++;
-                        }
-                        if(mx == 295 && my == 410)
-                        {
-                            DEBUG(sx);
-                            DEBUG(sy);
-                            DEBUG(cx);
-                            DEBUG(ry);
+                            if(mx == 45 && my == 206)
+                            {
+                                DEBUG(mx);
+                                DEBUG(my);
+                                DEBUG(sx);
+                                DEBUG(sy);
+                                DEBUG(rx);
+                                DEBUG(ry);
+                            }
                         }
 
                         break;
@@ -360,11 +374,12 @@ public:
         {
             printf("Medial axis image is :\n");
             for(int i = 0; i < n; i++)
-                if(medial[i] || isContour[i]) pcolor[i] = 1;
+                if(isContour[i]) pcolor[i] = 1;
+                else if(medial[i]) pcolor[i] = 2;
                 else pcolor[i] = 0;
             for(int i = height-1; i >= 0; i--, printf("\n"))
                 for(int j = 0; j < width; j++)
-                    printf("%c", ".#"[pcolor[i*width+j]]);
+                    printf("%c", ".#$"[pcolor[i*width+j]]);
         }
     }
 };
