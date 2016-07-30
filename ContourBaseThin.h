@@ -279,6 +279,7 @@ public:
         }
         return res / num;
     }
+    //接下来可以试一试改变一下求该点切线斜率的方法
     void getMedialAxis(bool isPrint)
     {
         int getNum = 0;

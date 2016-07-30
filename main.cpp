@@ -108,6 +108,7 @@ void ContourDriver(char *input)
     ContourBaseThin Thin(data, height, width, b, f);
     Thin.penWidth = selfThinningDriver(input);
     DEBUG(Thin.penWidth);
+
     freopen("EF-rs.txt", "w", stdout);
     Thin.getContourVector(false);
 
@@ -126,7 +127,7 @@ void ContourDriver(char *input)
     freopen("CON", "w", stdout);
 
     //code for saving image
-    cout<<"saving"<<endl;
+    cout<<"saving..."<<endl;
     lineByte = calLineByte(width, 8);
     unsigned char* newData = new unsigned char[height*lineByte];
     Thin.get256Color();
@@ -163,6 +164,7 @@ int selfThinningDriver(char *input)
 //    saveBmp("save_test.bmp", ImageData, width, height, 1, pColorTable);
 //    return ;
 
+    //get sketch width of the word
     int d = runZhang(data, height, width, b, f, 1);
     DEBUG(d);
 //    int *BW = new int[height*width];
