@@ -85,13 +85,13 @@ int main()
     //if(runOCR()) return 0;
 
     //run binaryzation
-    //binaryzation("EF.bmp");
+//    binaryzation("BB.bmp");
 
     //run cutImage()
     //cutImage();
 //    selfThinningDriver("EF.bmp");
 //    printLine();
-    ContourDriver("EF.bmp");
+    ContourDriver("BB.bmp");
     return 0;
 }
 typedef pair<int, int> PII;
@@ -109,7 +109,7 @@ void ContourDriver(char *input)
     Thin.penWidth = selfThinningDriver(input);
     DEBUG(Thin.penWidth);
 
-    freopen("EF-rs.txt", "w", stdout);
+    freopen("BB-rs.txt", "w", stdout);
     Thin.getContourVector(false);
 
     //code for saving image
@@ -118,7 +118,7 @@ void ContourDriver(char *input)
     pColorTable[0].rgbBlue = pColorTable[0].rgbGreen = pColorTable[0].rgbRed = 0;
     pColorTable[1].rgbBlue = pColorTable[1].rgbGreen = pColorTable[1].rgbRed = 255;
     realToFormat(ImageData, data, height, width, 1);
-    saveBmp("EF-Contour.bmp", ImageData, width, height, 1, pColorTable);
+    saveBmp("BB-Contour.bmp", ImageData, width, height, 1, pColorTable);
 
     Thin.getSegmentDriver(false);
     //
@@ -140,7 +140,8 @@ void ContourDriver(char *input)
     newColorTable[1].rgbBlue = 255, newColorTable[1].rgbGreen = newColorTable[1].rgbRed = 0;
     newColorTable[2].rgbGreen = 255, newColorTable[2].rgbBlue = newColorTable[2].rgbRed = 0;
     newColorTable[3].rgbRed = 255, newColorTable[3].rgbGreen = newColorTable[3].rgbBlue = 0;
-    saveBmp("EF-rs.bmp", newData, width, height, 8, newColorTable);
+    newColorTable[4].rgbRed = 111, newColorTable[4].rgbGreen = newColorTable[4].rgbBlue = 111;
+    saveBmp("BB-rs.bmp", newData, width, height, 8, newColorTable);
 
 
 
@@ -293,7 +294,7 @@ int runZhang(unsigned char *data, int height, int width, int b, int f, bool isSa
                 sData[i*width+j] = solver.color[i*width+j] == 1 ? solver.FORE : solver.BACK;
 
         realToFormat(formatData, sData, height, width, 1);
-        saveBmp("ZhangResult/EF.bmp", formatData, width, height, 1, pColorTable);
+        saveBmp("ZhangResult/BB.bmp", formatData, width, height, 1, pColorTable);
         delete []sData;
         delete []formatData;
     }
@@ -401,8 +402,8 @@ bool runOCR()
 void binaryzation(char *input)
 {
     int height, width, biBitCount;
-    char outputGray[] = "gray-EF.bmp";
-    char outputBit[] = "bit-EF.bmp";
+    char outputGray[] = "gray-BB.bmp";
+    char outputBit[] = "bit-BB.bmp";
 
     int b, f;
     unsigned char *ImageData; //Í¼ÏñÊý¾Ý

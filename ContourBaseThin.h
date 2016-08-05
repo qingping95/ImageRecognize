@@ -47,20 +47,21 @@ double Angle(Vector A,Vector B)
 }//A到B的逆时针转的角
 class ContourBaseThin{
 public:
-    int *isContour;
-    int *color;
-    int *pcolor;
-    int *medial;
-    int *segIdx;
-    double *theta;
-    double *dTheta;
-    bool *vis;
-    int width, height, n;
-    int penWidth;
-    int BACK,FORE;
-    vector<int > Contour;
-    vector<PII > contourSeg;
-    vector<PII > segment;
+    int *isContour;             //记录某个点是否轮廓，值为点的在Contour中的编号+1
+    int *color;                 //记录每个点的颜色，前景or背景
+    int *pcolor;                //给每个点赋颜色，便于存储
+    int *medial;                //记录某个点是不是提取的骨架
+    int *segIdx;                //记录某个点的轮廓线段的编号，即在ContourSeg中的下标
+    double *theta;              //
+    double *dTheta;             //
+    bool *vis;                  //
+    int width, height, n;       //
+    int penWidth;               //
+    int BACK,FORE;              //
+    vector<int > Contour;       //记录轮廓点
+    vector<PII > contourSeg;    //记录切割轮廓后形成的线段
+    vector<PII > segment;       //中间值
+    vector<set<int> > midSeg;   //记录每一个线段包括的骨架点
     ContourBaseThin(){}
     ContourBaseThin(unsigned char *data, int h, int w, int b, int f)
     {
@@ -195,7 +196,7 @@ public:
         for(int i = 0; i < segment.size(); i++)
         {
             double diff = theta[segment[i].second] - theta[segment[i].first];
-            if(abs(diff) > 15.0/180*PI){
+            if(abs(diff) > 0.1){//5.0/180*PI
                 if(i){
                     return segment[i-1].second+1;
                     //contourSeg.push_back(PII(stidx, segment[i-1].second));
@@ -203,7 +204,7 @@ public:
                     for(int j = segment[i].first; j <= segment[i].second; j++)
                     {
                         double curd = theta[j] - theta[segment[i].first];
-                        if(abs(curd) > 15.0/180*PI){
+                        if(abs(curd) > 0.1){//5.0/180*PI
                             return j;
                         }
                     }
@@ -256,8 +257,8 @@ public:
             for(int j = contourSeg[i].first; j < contourSeg[i].second; j++)
                 pcolor[Contour[j]] = idx%3+1;
         for(int i = 0; i < n; i++){
-            if(pcolor[i] == 0) pcolor[i] = 255;
-            else ;
+            if(medial[i]) pcolor[i] = 4;
+            else if(pcolor[i] == 0) pcolor[i] = 255;
 //            if(isContour[i] == 0 && medial[i]) pcolor[i] = 0;
         }
     }
@@ -268,7 +269,7 @@ public:
         double res = 0;
         int sx = Contour[x] / width;
         int sy = Contour[x] % width;
-        for(int i = max(0, x - 5); i < min((int)Contour.size(), x+5); i++)
+        for(int i = max(0, x - 3); i < min((int)Contour.size(), x+3); i++)
         {
             int cx = Contour[i] / width;
             int cy = Contour[i] % width;
@@ -285,6 +286,8 @@ public:
         int getNum = 0;
         memset(vis, 0, sizeof(bool )*height*width);
         memset(medial, 0, sizeof(int)*height*width);
+        midSeg.clear();
+        midSeg = vector<set<int> >(contourSeg.size());
         for(int i = 0; i < contourSeg.size(); i ++)
             for(int j = contourSeg[i].first; j < contourSeg[i].second; j++)
             {
@@ -297,13 +300,13 @@ public:
         {
             if(vis[i]) continue;
             vis[i] = 1;
-
+            //返回的是这个位置的平均极角
             double stAvg = getAvgD(i);
             double stDir;
-            int add;
+            double add;
             double dirK;
             if(Sign(stAvg) == 0) add = 0, dirK = 1;
-            else if(Sign(stAvg - PI/2) == 0) add = 1, dirK = 0;
+            else if(Sign(stAvg + PI/2) == 0) add = 1, dirK = 0;
             else add = 1, dirK = 1/tan(stAvg);
 //                int oriPos = contourSeg[j];
             int sx = Contour[i] / width;
@@ -313,17 +316,13 @@ public:
             double cy = dirK + sy;
             double ccx = cx+add;
             double ccy = cy + dirK;
-            if(color[(int)(cx+0.5) * width + (int)(cy+0.5)] == 0 || color[(int)(cx+0.5) * width + (int)(ccy+0.5)] == 0) {
+            if(color[(int)(cx+0.5) * width + (int)(cy+0.5)] == 0 || color[(int)(ccx+0.5) * width + (int)(ccy+0.5)] == 0) {
                 add = -add;
                 dirK = -dirK;
                 cx = sx + add;
                 cy = sy + dirK;
             }
-            if(sx == 44 && sy == 206)
-            {
-                DEBUG(add);
-                DEBUG(dirK);
-            }
+
             int num = 0;
             while(Sign(cx) >= 0 && Sign(cx - height) < 0 && Sign(cy - width) < 0 && Sign(cy) >= 0)
             {
@@ -331,38 +330,24 @@ public:
                 int rx = cx+0.5;
                 int ry = cy+0.5;
                 if(color[rx*width+ry] == 0) break;
-//                if(sx == 37 && sy == 143)
-//                {
-//                    DEBUG(add);
-//                    DEBUG(dirK);
-//                    DEBUG(rx);
-//                    DEBUG(ry);
-//                }
-                if(ry < width && ry >= 0 && num > 3)
+                if(ry < width && ry >= 0 && num > 10)
                 {
                     if(isContour[rx*width+ry] > 0)
                     {
+                        vis[rx*width+ry] = 1;
                         double peAvg = getAvgD(isContour[rx*width+ry] - 1);
 //                        if(true
                         int mx, my;
-                        if(abs(peAvg - stAvg) < 14.0*PI/180
-                            && Sign(Length(Vector(sx, sy) - Vector(rx, ry)) - 2.0*penWidth) < 0)
+                        if(abs(peAvg - stAvg) < 0.45//20.0*PI/180
+                            && Sign(Length(Vector(sx, sy) - Vector(rx, ry)) - 2.0*penWidth) < 0 && segIdx[sx*width+sy] != segIdx[rx*width+ry])
                         {
                             mx = (sx+cx)*1.0/2+0.5;
                             my = (sy+cy)*1.0/2+0.5;
                             medial[mx*width+my] = 1;
                             getNum++;
-                            if(mx == 45 && my == 206)
-                            {
-                                DEBUG(mx);
-                                DEBUG(my);
-                                DEBUG(sx);
-                                DEBUG(sy);
-                                DEBUG(rx);
-                                DEBUG(ry);
-                            }
+                            midSeg[segIdx[sx*width+sy]].emplace(mx*width+my);
+                            midSeg[segIdx[rx*width+ry]].emplace(mx*width+my);
                         }
-
                         break;
                     }
                 }
