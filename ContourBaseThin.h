@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <map>
 
 #include "IMAGE_DSU.h"
 #include "Image.h"
@@ -58,10 +59,13 @@ public:
     int width, height, n;       //
     int penWidth;               //
     int BACK,FORE;              //
+    const double segDiff = 7.0/180*PI;
+    const double midDiff = 10.0*PI/180;
     vector<int > Contour;       //记录轮廓点
     vector<PII > contourSeg;    //记录切割轮廓后形成的线段
     vector<PII > segment;       //中间值
-    vector<set<int> > midSeg;   //记录每一个线段包括的骨架点
+    vector<int> midPoint;       //记载骨架点
+    vector<vector<int> > midSeg;   //记录每一个线段包括的骨架点, 里面存的值是骨架点的下标。
     ContourBaseThin(){}
     ContourBaseThin(unsigned char *data, int h, int w, int b, int f)
     {
@@ -161,18 +165,19 @@ public:
     }
     double getK(Vector A)
     {
-        double ang = angle(A);
-        if(ang > PI/2) ang -= PI;
-        if(ang < -PI/2) ang += PI;
-        if(abs(ang - PI/2) < 1e-4) ang -= PI;
-        return ang;
+        if(A.x == 0) return PI/2;
+        return atan(A.y/A.x);
+//        double ang = angle(A);
+//        if(ang > PI/2) ang -= PI;
+//        if(ang < -PI/2) ang += PI;
+//        if(abs(ang - PI/2) < 1e-4) ang -= PI;
+//        return ang;
     }
     int getSegmentEndPoint(int stidx)
     {
 //        DEBUG(stidx);
 //        DEBUG(Contour.size());
         segment.clear();
-        const double PI = acos(-1.0);
         int sx = Contour[stidx] / width;
         int sy = Contour[stidx] % width;
         for(int i = stidx+1; i < Contour.size(); i++)
@@ -196,7 +201,7 @@ public:
         for(int i = 0; i < segment.size(); i++)
         {
             double diff = theta[segment[i].second] - theta[segment[i].first];
-            if(abs(diff) > 0.1){//5.0/180*PI
+            if(abs(diff) > segDiff){//
                 if(i){
                     return segment[i-1].second+1;
                     //contourSeg.push_back(PII(stidx, segment[i-1].second));
@@ -204,7 +209,7 @@ public:
                     for(int j = segment[i].first; j <= segment[i].second; j++)
                     {
                         double curd = theta[j] - theta[segment[i].first];
-                        if(abs(curd) > 0.1){//5.0/180*PI
+                        if(abs(curd) > segDiff){//5.0/180*PI
                             return j;
                         }
                     }
@@ -284,10 +289,10 @@ public:
     void getMedialAxis(bool isPrint)
     {
         int getNum = 0;
-        memset(vis, 0, sizeof(bool )*height*width);
+//        memset(vis, 0, sizeof(bool )*height*width);
         memset(medial, 0, sizeof(int)*height*width);
         midSeg.clear();
-        midSeg = vector<set<int> >(contourSeg.size());
+        midSeg = vector<vector<int> >(contourSeg.size());
         for(int i = 0; i < contourSeg.size(); i ++)
             for(int j = contourSeg[i].first; j < contourSeg[i].second; j++)
             {
@@ -298,8 +303,8 @@ public:
         cerr <<"MARK!!!!!!!!!!"<<endl;
         for(int i = 0; i < Contour.size(); i++)
         {
-            if(vis[i]) continue;
-            vis[i] = 1;
+//            if(vis[i]) continue;
+//            vis[i] = 1;
             //返回的是这个位置的平均极角
             double stAvg = getAvgD(i);
             double stDir;
@@ -334,19 +339,21 @@ public:
                 {
                     if(isContour[rx*width+ry] > 0)
                     {
-                        vis[rx*width+ry] = 1;
+                        //vis[rx*width+ry] = 1;
                         double peAvg = getAvgD(isContour[rx*width+ry] - 1);
-//                        if(true
                         int mx, my;
-                        if(abs(peAvg - stAvg) < 0.45//20.0*PI/180
+                        if(abs(peAvg - stAvg) < midDiff
                             && Sign(Length(Vector(sx, sy) - Vector(rx, ry)) - 2.0*penWidth) < 0 && segIdx[sx*width+sy] != segIdx[rx*width+ry])
                         {
                             mx = (sx+cx)*1.0/2+0.5;
                             my = (sy+cy)*1.0/2+0.5;
-                            medial[mx*width+my] = 1;
-                            getNum++;
-                            midSeg[segIdx[sx*width+sy]].emplace(mx*width+my);
-                            midSeg[segIdx[rx*width+ry]].emplace(mx*width+my);
+                            //if(medial[mx*width+my] != 1){
+                                medial[mx*width+my] = 1;
+                                getNum++;
+                                midPoint.emplace_back(mx*width+my);
+                                midSeg[segIdx[sx*width+sy]].emplace_back(midPoint.size()-1);
+                                //midSeg[segIdx[rx*width+ry]].emplace_back(midPoint.size()-1);
+                            //}
                         }
                         break;
                     }
@@ -355,6 +362,24 @@ public:
                 cy += dirK;
             }
         }
+        map<int, int> mp;
+        for(int i = 0; i < midSeg.size(); i++)
+        {
+            mp.clear();
+            for(int j = 0; j < midSeg[i].size(); j++)
+            {
+                int idx = midSeg[i][j];
+                idx = midPoint[idx];
+                if(mp.find(idx) != mp.end())
+                {
+                    midSeg[i].erase(midSeg[i].begin()+j);
+                    j--;
+                }else{
+                    mp[idx] = 1;
+                }
+            }
+        }
+//        clearMid();
         DEBUG(getNum);
         if(isPrint)
         {
@@ -366,6 +391,100 @@ public:
             for(int i = height-1; i >= 0; i--, printf("\n"))
                 for(int j = 0; j < width; j++)
                     printf("%c", ".#$"[pcolor[i*width+j]]);
+        }
+    }
+    void linkOneMidSeg(vector<int>& seg)
+    {
+        for(int i = 1; i < seg.size(); i++)
+        {
+            int pid = seg[i-1], cid = seg[i];
+            pid = midPoint[pid], cid = midPoint[cid];
+            int px = pid / width, py = pid % width;
+            int cx = cid / width, cy = cid % width;
+            if(max(abs(px-cx), abs(cy-py)) > 1)
+            {
+                //将两个点用直线连接起来
+            }
+        }
+    }
+    void clearOneMidSeg(vector<int>& seg)
+    {
+        DEBUG(seg.size());
+        for(int i = 4; i+1 < seg.size(); i++)
+        {
+            int pid = seg[i-1];
+            int sx = midPoint[pid]/width, sy = midPoint[pid]%width;
+            double res = 0;
+            int num = 0;
+            for(int j = max(0,i-4); j < i-1; j++)
+            {
+                int cx = midPoint[seg[j]] / width;
+                int cy = midPoint[seg[j]] % width;
+                res += getK(Vector(cx - sx, cy - sy)), num++;
+                if(midPoint[seg[i]] == 570*width+321)
+                {
+                    cout<<"pre: cx -> "<<cx<<", cy -> "<<cy<<endl;
+                }
+            }
+            res /= num;
+            int cid = seg[i];
+            sx = midPoint[cid]/width, sy = midPoint[cid]%width;
+            int px = midPoint[seg[i-1]]/width, py = midPoint[seg[i-1]]%width;
+            int nx = midPoint[seg[i+1]]/width, ny = midPoint[seg[i+1]]%width;
+            double curk = getK(Vector(sx-px, sy-py))+getK(Vector(sx-nx, sy-ny));
+            curk /= 2;
+            if(abs(res - curk) > midDiff)
+            {
+                medial[midPoint[cid]] = 0;
+            }
+            if(sx == 570 && sy == 321){
+                DEBUG(i);
+                DEBUG(sx);
+                DEBUG(sy);
+                DEBUG(medial[midPoint[cid]]);
+                DEBUG(px);
+                DEBUG(py);
+                DEBUG(nx);
+                DEBUG(ny);
+            }
+        }
+        for(int i = 0; i < seg.size(); i++)
+        {
+            int cid = seg[i];
+            if(medial[midPoint[cid]] == 0)
+            {
+                seg.erase(seg.begin()+i);
+                i--;
+            }
+        }
+    }
+    void clearMid()
+    {
+        cout<<midSeg.size()<<endl;
+        for(int i = 0; i < midSeg.size(); i++)
+        {
+            if(midSeg[i].empty()) continue;
+            clearOneMidSeg(midSeg[i]);
+//            DEBUG(midSeg[i].size());
+//            int st = *midSeg[i].begin();
+////            DEBUG(st);
+//            int ed = *midSeg[i].rbegin();
+////            DEBUG(ed);
+//            int sx = midPoint[st]/width, sy = midPoint[st]%width;
+//            int ex = midPoint[ed]/width, ey = midPoint[ed]%width;
+////            cout<<i<<" : "<<sx<<" "<<sy<<" "<<ex<<" "<<ey<<endl;
+//            double allK = getK(Point(ex, ey) - Point(sx, sy));
+//            for(int j = 1; j+1 < midSeg[i].size(); j++)
+//            {
+//                int cid = midSeg[i][j];
+//                int mx = midPoint[cid]/width, my = midPoint[cid]%width;
+//                double avgK = (getK(Point(sx, sy)-Point(mx, my)) + getK(Point(mx, my)-Point(ex, ey))) / 2;
+//                if(abs(allK - avgK) > midDiff){
+//                    medial[midPoint[cid]] = 0;
+//                    midSeg[i].erase(midSeg[i].begin()+j);
+//                    j--;
+//                }
+//            }
         }
     }
 };
