@@ -59,7 +59,7 @@ public:
     int width, height, n;       //
     int penWidth;               //
     int BACK,FORE;              //
-    const double segDiff = 7.0/180*PI;
+    const double segDiff = 10.0/180*PI;
     const double midDiff = 10.0*PI/180;
     vector<int > Contour;       //记录轮廓点
     vector<PII > contourSeg;    //记录切割轮廓后形成的线段
@@ -185,9 +185,33 @@ public:
             int cx = Contour[i] / width;
             int cy = Contour[i] % width;
             theta[i] = getK(Vector(cx - sx, cy - sy));
+            if(theta[i] == PI/2) theta[i] = 0;
             if(i>stidx+1) dTheta[i] = theta[i] - theta[i-1];
         }
         int st = stidx+1;
+        int len = 4;
+        for(int i = st+1; i < Contour.size(); i++)
+        {
+            int sx = Contour[i]/width, sy = Contour[i]%width;
+            Point pre;
+            for(int j = max(stidx, i-len); j < i; j++)
+            {
+                int cx = Contour[j] / width;
+                int cy = Contour[j] % width;
+                pre = pre + Vector(cx - sx, cy - sy);
+            }
+            Point suf;
+            for(int j = i+1; j < min((int)Contour.size(), i+len+1); j++)
+            {
+                int cx = Contour[j] / width;
+                int cy = Contour[j] % width;
+                suf = suf + Vector(cx - sx, cy - sy);
+            }
+            if(Angle(pre, suf) < 115.0/180*PI)
+            {
+                return i;
+            }
+        }
         for(int i = st+1; i < Contour.size(); i++)
         {
             if(Sign(dTheta[i]) != Sign(dTheta[i-1]))
@@ -198,10 +222,14 @@ public:
             }
         }
         if(st < Contour.size()-1) segment.push_back(PII(st, Contour.size()-1));
+        int averheight = min(height, width)*2/3;
         for(int i = 0; i < segment.size(); i++)
         {
+//            double diff = theta[segment[i].second] - theta[segment[max(i-1, 0)].first];
             double diff = theta[segment[i].second] - theta[segment[i].first];
+//            double diff = theta[segment[i].second];
             if(abs(diff) > segDiff){//
+//            if(abs(diff) > segDiff || segment[i].second - stidx > averheight){//
                 if(i){
                     return segment[i-1].second+1;
                     //contourSeg.push_back(PII(stidx, segment[i-1].second));
@@ -235,7 +263,7 @@ public:
                 int cy = Contour[i]%width;
                 segIdx[Contour[i]] = contourSeg.size()-1;
             }
-            cerr<<st<<" -> "<<tmp<<endl;
+//            cerr<<st<<" -> "<<tmp<<endl;
             st = tmp;
         }
         if(isPrint)
@@ -264,6 +292,7 @@ public:
         for(int i = 0; i < n; i++){
             if(medial[i]) pcolor[i] = 4;
             else if(pcolor[i] == 0) pcolor[i] = 255;
+//            if(pcolor[i] == 0) pcolor[i] = 255;
 //            if(isContour[i] == 0 && medial[i]) pcolor[i] = 0;
         }
     }
@@ -279,13 +308,13 @@ public:
             int cx = Contour[i] / width;
             int cy = Contour[i] % width;
             if(i == x) continue;
-            if(segIdx[Contour[i]] == segIdx[Contour[x]]){
+//            if(segIdx[Contour[i]] == segIdx[Contour[x]]){
                 res += getK(Vector(cx - sx, cy - sy)), num++;
-            }
+//            }
         }
         return res / num;
     }
-    //接下来可以试一试改变一下求该点切线斜率的方法
+
     void getMedialAxis(bool isPrint)
     {
         int getNum = 0;
@@ -347,6 +376,15 @@ public:
                         {
                             mx = (sx+cx)*1.0/2+0.5;
                             my = (sy+cy)*1.0/2+0.5;
+                            if(mx == 155 && my == 195)
+                            {
+                                DEBUG(mx);
+                                DEBUG(my);
+                                DEBUG(sx);
+                                DEBUG(sy);
+                                DEBUG(rx);
+                                DEBUG(ry);
+                            }
                             //if(medial[mx*width+my] != 1){
                                 medial[mx*width+my] = 1;
                                 getNum++;
@@ -393,8 +431,72 @@ public:
                     printf("%c", ".#$"[pcolor[i*width+j]]);
         }
     }
+    ///这里死循环了，记得来debug --- 已修复
+    vector<int> linkTwoPoint(int sx, int sy, int ex, int ey)
+    {
+        vector<int> pt;
+        double stAvg = getK(Vector(sx-ex, sy-ey));
+        double add;
+        double dirK;
+        if(Sign(stAvg) == 0) add = 0, dirK = 1;
+        else if(Sign(stAvg + PI/2) == 0 || Sign(stAvg - PI/2) == 0) add = 1, dirK = 0;
+        else add = 1, dirK = 1.0*(sy-ey)/(sx-ex);
+
+        if(fabs(dirK) > 1.1) add /= dirK, dirK /= dirK;
+        if(sx > ex && add > 0) add = -add;
+        if(sx < ex && add < 0) add = -add;
+        if(sy > ey && dirK > 0) dirK = -dirK;
+        if(sy < ey && dirK < 0) dirK = -dirK;
+        double cx = sx+add;
+        double cy = dirK + sy;
+        //cerr<<cx<<" "<<cy<<" "<<stAvg<<endl;
+        while(true)
+        {
+            int tx = cx, ty = cy;
+            if(sx <= ex && tx > ex) break;
+            if(sx >= ex && tx < ex) break;
+            if(sy <= ey && ty > ey) break;
+            if(sy >= ey && ty < ey) break;
+            //cerr<<tx<<" "<<ty<<" "<<sx<<" "<<sy<<" "<<ex<<" "<<ey<<endl;
+            pt.push_back(tx*width+ty);
+            if(color[tx*width+ty] == 0){
+                pt.clear();
+                return pt;
+            }
+            cx += add;
+            cy += dirK;
+        }
+        return pt;
+    }
+    vector<int> DDA_DrawLine(int sx, int sy, int ex, int ey)
+    {
+        long YDis = (ey - sy);
+        long XDis = (ex - sx);
+        long MaxStep = max(abs(XDis),abs(YDis)); // 步进的步数
+        float fXUnitLen = 1.0f;  // X方向的单位步进
+        float fYUnitLen = 1.0f;  // Y方向的单位步进
+        fYUnitLen = static_cast<float>(YDis)/static_cast<float>(MaxStep);
+        fXUnitLen = static_cast<float>(XDis)/static_cast<float>(MaxStep);
+        // 设置起点像素颜色
+//        pDC->SetPixel(sx,sy,LineCor);
+        vector<int> pt;
+        pt.push_back(sx*width+sy);
+        float x = static_cast<float>(sx);
+        float y = static_cast<float>(sy);
+        // 循环步进
+        for (long i = 1;i<=MaxStep;i++)
+        {
+            x = x + fXUnitLen;
+            y = y + fYUnitLen;
+            int xx = x+0.5, yy = y+0.5;
+            pt.push_back(xx*width+yy);
+//            pDC->SetPixel(FloatToInteger(x),FloatToInteger(y),LineCor);
+        }
+        return pt;
+    }
     void linkOneMidSeg(vector<int>& seg)
     {
+        int len = 4;
         for(int i = 1; i < seg.size(); i++)
         {
             int pid = seg[i-1], cid = seg[i];
@@ -403,49 +505,55 @@ public:
             int cx = cid / width, cy = cid % width;
             if(max(abs(px-cx), abs(cy-py)) > 1)
             {
-                //将两个点用直线连接起来
+                Point pre;
+                for(int j = max(0, i-1-len); j < i-1; j++)
+                {
+                    int sx = midPoint[seg[j]]/width, sy = midPoint[seg[j]]%width;
+                    pre = pre + Vector(sx-px, sy-py);
+                }
+                //将两个点用直线连接起来。
+                if(i == 1 || Angle(pre, Vector(cx-px, cy-py)) > 120.0/180*PI)
+                {
+                    vector<int> pt = DDA_DrawLine(px, py, cx, cy);
+//                    vector<int> pt = linkTwoPoint(px, py, cx, cy);
+                    //seg.insert(seg.begin()+i, pt.begin(), pt.end());
+                    for(int j = 0; j < pt.size(); j++)
+                    {
+                        medial[pt[j]] = 1;
+                    }
+                }
             }
         }
     }
     void clearOneMidSeg(vector<int>& seg)
     {
         DEBUG(seg.size());
-        for(int i = 4; i+1 < seg.size(); i++)
+        int len = 4;
+        for(int i = 2; i+1 < seg.size(); i++)
         {
-            int pid = seg[i-1];
-            int sx = midPoint[pid]/width, sy = midPoint[pid]%width;
-            double res = 0;
+            int cid = seg[i];
+            int sx = midPoint[cid]/width, sy = midPoint[cid]%width;
+            double pre = 0;
             int num = 0;
-            for(int j = max(0,i-4); j < i-1; j++)
+            for(int j = max(0, i-len); j < i; j++)
             {
                 int cx = midPoint[seg[j]] / width;
                 int cy = midPoint[seg[j]] % width;
-                res += getK(Vector(cx - sx, cy - sy)), num++;
-                if(midPoint[seg[i]] == 570*width+321)
-                {
-                    cout<<"pre: cx -> "<<cx<<", cy -> "<<cy<<endl;
-                }
+                pre += getK(Vector(cx - sx, cy - sy)), num++;
             }
-            res /= num;
-            int cid = seg[i];
-            sx = midPoint[cid]/width, sy = midPoint[cid]%width;
-            int px = midPoint[seg[i-1]]/width, py = midPoint[seg[i-1]]%width;
-            int nx = midPoint[seg[i+1]]/width, ny = midPoint[seg[i+1]]%width;
-            double curk = getK(Vector(sx-px, sy-py))+getK(Vector(sx-nx, sy-ny));
-            curk /= 2;
-            if(abs(res - curk) > midDiff)
+            pre /= num;
+            double suf = 0;
+            num = 0;
+            for(int j = i+1; j < min((int)seg.size(), i+len+1); j++)
+            {
+                int cx = midPoint[seg[j]] / width;
+                int cy = midPoint[seg[j]] % width;
+                suf += getK(Vector(cx - sx, cy - sy)), num++;
+            }
+            suf /= num;
+            if(abs(pre - suf) > midDiff)
             {
                 medial[midPoint[cid]] = 0;
-            }
-            if(sx == 570 && sy == 321){
-                DEBUG(i);
-                DEBUG(sx);
-                DEBUG(sy);
-                DEBUG(medial[midPoint[cid]]);
-                DEBUG(px);
-                DEBUG(py);
-                DEBUG(nx);
-                DEBUG(ny);
             }
         }
         for(int i = 0; i < seg.size(); i++)
@@ -464,27 +572,8 @@ public:
         for(int i = 0; i < midSeg.size(); i++)
         {
             if(midSeg[i].empty()) continue;
+            linkOneMidSeg(midSeg[i]);
             clearOneMidSeg(midSeg[i]);
-//            DEBUG(midSeg[i].size());
-//            int st = *midSeg[i].begin();
-////            DEBUG(st);
-//            int ed = *midSeg[i].rbegin();
-////            DEBUG(ed);
-//            int sx = midPoint[st]/width, sy = midPoint[st]%width;
-//            int ex = midPoint[ed]/width, ey = midPoint[ed]%width;
-////            cout<<i<<" : "<<sx<<" "<<sy<<" "<<ex<<" "<<ey<<endl;
-//            double allK = getK(Point(ex, ey) - Point(sx, sy));
-//            for(int j = 1; j+1 < midSeg[i].size(); j++)
-//            {
-//                int cid = midSeg[i][j];
-//                int mx = midPoint[cid]/width, my = midPoint[cid]%width;
-//                double avgK = (getK(Point(sx, sy)-Point(mx, my)) + getK(Point(mx, my)-Point(ex, ey))) / 2;
-//                if(abs(allK - avgK) > midDiff){
-//                    medial[midPoint[cid]] = 0;
-//                    midSeg[i].erase(midSeg[i].begin()+j);
-//                    j--;
-//                }
-//            }
         }
     }
 };

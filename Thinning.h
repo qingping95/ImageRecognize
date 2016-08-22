@@ -78,7 +78,6 @@ public:
             run = false;
 
             cas++;
-            cerr<<"there are "<<cas<<" sprints"<<endl;
 
             //sprint one
             for(int i = 0; i < height; i++)
@@ -94,7 +93,7 @@ public:
                         vis[i*width+j] = judge(i, j, color, 2);
             run |= clearRubbish(vis);
         }
-
+        cerr<<"there are "<<cas<<" sprints"<<endl;
         delete []vis;
 //        delete []tc;
     }
