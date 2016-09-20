@@ -58,7 +58,7 @@
 	<io.h>
 	<sstream>
 
-1470642026 source:f:\acm\gitacm\acm\program\photo\main.cpp
+1474372248 source:f:\acm\gitacm\acm\program\photo\main.cpp
 	<assert.h>
 	<math.h>
 	<iomanip>
@@ -133,7 +133,7 @@
 	<iostream>
 	<fstream>
 
-1471858079 f:\acm\gitacm\acm\program\photo\contourbasethin.h
+1474372462 f:\acm\gitacm\acm\program\photo\contourbasethin.h
 	<assert.h>
 	<math.h>
 	<iomanip>
@@ -144,6 +144,20 @@
 	<iostream>
 	<fstream>
 	<map>
+	"Kmeans.h"
 	"IMAGE_DSU.h"
 	"Image.h"
+
+1473317482 f:\acm\gitacm\acm\program\photo\kmeans.h
+	<iostream>
+	<vector>
+	<map>
+	<cstdlib>
+	<algorithm>
+	<fstream>
+	<stdio.h>
+	<string.h>
+	<string>
+	<time.h>
+	<limits.h>
 

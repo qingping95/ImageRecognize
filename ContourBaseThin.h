@@ -10,13 +10,14 @@
 #include <iostream>
 #include <fstream>
 #include <map>
-
+#include "Kmeans.h"
 #include "IMAGE_DSU.h"
 #include "Image.h"
 
 typedef pair<int, int> PII;
+typedef pair<double, int> PDI;
 int dir[][2] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {-1, 1}, {1, 1}, {1, -1}, {-1, -1}};
-
+const int INF = 0x3f3f3f3f;
 struct Point
 {
     double x,y;
@@ -55,12 +56,13 @@ public:
     int *segIdx;                //记录某个点的轮廓线段的编号，即在ContourSeg中的下标
     double *theta;              //
     double *dTheta;             //
+    double *dist;
     bool *vis;                  //
     int width, height, n;       //
     int penWidth;               //
     int BACK,FORE;              //
     const double segDiff = 10.0/180*PI;
-    const double midDiff = 10.0*PI/180;
+    const double midDiff = 15.0*PI/180;
     vector<int > Contour;       //记录轮廓点
     vector<PII > contourSeg;    //记录切割轮廓后形成的线段
     vector<PII > segment;       //中间值
@@ -75,6 +77,7 @@ public:
         isContour = new int[h*w];
         theta = new double[h*w];
         dTheta = new double[h*w];
+        dist = new double[h*w];
         pcolor = new int[h*w];
         medial = new int[h*w];
         color = new int[h*w];
@@ -86,6 +89,7 @@ public:
     }
     ~ContourBaseThin()
     {
+        delete []dist;
         delete []vis;
         delete []pcolor;
         delete []theta;
@@ -151,6 +155,8 @@ public:
                     vis[i*width+j] = 1, dfs(i, j);
 
         //cerr << "zeroNum ->" << num << endl;
+
+        getDist();
         DEBUG(num);
         DEBUG(Contour.size());
         if(isPrint)
@@ -161,6 +167,38 @@ public:
 //                    printf("%c", ".#"[pcolor[i*width+j]]);
                     printf("%c", ".#"[isContour[i*width+j] > 0]);
             printf("\n");
+        }
+    }
+    void getDist()
+    {
+        //memset(dist, 0, sizeof(double)*height*width);
+        for(int i = 0; i < height*width; i++)
+            dist[i] = color[i] ? INF : 0;
+        priority_queue<PDI, vector<PDI>, greater<PDI> > que;
+        for(int i = 0; i < Contour.size(); i++)
+        {
+            dist[Contour[i]] = 1;
+            que.push(PDI(1, Contour[i]));
+        }
+        while(!que.empty())
+        {
+            PDI cur = que.top();que.pop();
+            if(cur.first > dist[cur.second]) continue;
+
+            int x = cur.second/width;
+            int y = cur.second%width;
+
+            for(int i = 0; i < 8; i++)
+            {
+                int cx = x + dir[i][0];
+                int cy = y + dir[i][1];
+                if(!CHECKWH(cx, cy)) continue;
+                if(dist[cx*width+cy] > dist[cur.second]+(i<4?1:sqrt(2)))
+                {
+                    dist[cx*width+cy] = dist[cur.second]+(i<4?1:sqrt(2));
+                    que.push(PDI(dist[cx*width+cy], cx*width+cy));
+                }
+            }
         }
     }
     double getK(Vector A)
@@ -189,15 +227,17 @@ public:
             if(i>stidx+1) dTheta[i] = theta[i] - theta[i-1];
         }
         int st = stidx+1;
-        int len = 4;
+        int len = 6;
         for(int i = st+1; i < Contour.size(); i++)
         {
             int sx = Contour[i]/width, sy = Contour[i]%width;
             Point pre;
+            int cnt = 0;
             for(int j = max(stidx, i-len); j < i; j++)
             {
                 int cx = Contour[j] / width;
                 int cy = Contour[j] % width;
+                cnt++;
                 pre = pre + Vector(cx - sx, cy - sy);
             }
             Point suf;
@@ -205,9 +245,10 @@ public:
             {
                 int cx = Contour[j] / width;
                 int cy = Contour[j] % width;
+                cnt++;
                 suf = suf + Vector(cx - sx, cy - sy);
             }
-            if(Angle(pre, suf) < 115.0/180*PI)
+            if(cnt >= 9 && Angle(pre, suf) < 130.0/180*PI)
             {
                 return i;
             }
@@ -292,7 +333,7 @@ public:
         for(int i = 0; i < n; i++){
             if(medial[i]) pcolor[i] = 4;
             else if(pcolor[i] == 0) pcolor[i] = 255;
-//            if(pcolor[i] == 0) pcolor[i] = 255;
+//            if(pcolor[i] == 0) pcolor[i] = 255
 //            if(isContour[i] == 0 && medial[i]) pcolor[i] = 0;
         }
     }
@@ -376,15 +417,6 @@ public:
                         {
                             mx = (sx+cx)*1.0/2+0.5;
                             my = (sy+cy)*1.0/2+0.5;
-                            if(mx == 155 && my == 195)
-                            {
-                                DEBUG(mx);
-                                DEBUG(my);
-                                DEBUG(sx);
-                                DEBUG(sy);
-                                DEBUG(rx);
-                                DEBUG(ry);
-                            }
                             //if(medial[mx*width+my] != 1){
                                 medial[mx*width+my] = 1;
                                 getNum++;
@@ -417,8 +449,9 @@ public:
                 }
             }
         }
-//        clearMid();
-        DEBUG(getNum);
+        clearMid();
+        linkMedial();
+        while(linkEndPoint());
         if(isPrint)
         {
             printf("Medial axis image is :\n");
@@ -431,6 +464,186 @@ public:
                     printf("%c", ".#$"[pcolor[i*width+j]]);
         }
     }
+
+    int find(int x, int* pa)
+    {
+        if(pa[x] == x) return x;
+        return pa[x] = find(pa[x], pa);
+    }
+    bool linkEndPoint()
+    {
+        int *pa = new int[height*width];
+        for(int i = 0; i < width*height; i++) pa[i] = i;
+        vector<int> gp;
+        for(int i = 0; i < width*height; i++)
+        {
+            if(!color[i] || !medial[i]) continue;
+            int x = i / width;
+            int y = i % width;
+            int cnt = 0;
+            for(int j = 0; j < 8; j++)
+            {
+                int cx = x + dir[j][0];
+                int cy = y + dir[j][1];
+                if(!CHECKWH(cx, cy)) continue;
+                if(medial[cx*width+cy]) pa[find(cx*width+cy,pa)] = find(i,pa);
+                cnt += medial[cx*width+cy];
+            }
+            if(cnt > 1) continue;
+            vis[i] = 1;
+            gp.push_back(i);
+        }
+        bool flag = false;
+        for(int id : gp)
+        {
+            int x = id / width;
+            int y = id % width;
+            int pe = searchClosestMid(x, y,pa);
+            cout<<x<<" "<<y<<" -> "<<pe/width<<" "<<pe%width<<" "<<pe<<endl;
+            if(pe == -1) continue;
+            vector<int> pt = DDA_DrawLine(x, y, pe/width, pe%width);
+            cout<<pt.size()<<endl;
+            for(int add:pt)
+            {
+                flag = true;
+                medial[add] = 1;
+            }
+        }
+        delete []pa;
+        return flag;
+    }
+
+    //寻找距离点(x,y)最近的中位孤立点，mark数组是标记孤立点的数组
+    int searchClosestMid(int x, int y, int *pa)
+    {
+//        double *d = new double[width*height];
+        memset(dist, 0x7f, sizeof(double)*width*height);
+        priority_queue<PDI, vector<PDI >, greater<PDI> > q;
+        q.push(PII(0, x*width+y));
+        dist[x*width+y] = 0;
+        int spa = find(x*width+y,pa);
+        while(!q.empty())
+        {
+            PII cur = q.top();q.pop();
+            int id = cur.second;
+            double s = cur.first;
+            if(dcmp(s - 30)>0) return -1;
+            if(medial[id] && dcmp(s - 2) > 0 && find(id,pa) != spa) return id;
+            if(dcmp(s - dist[id]) > 0) continue;
+            int x = id / width;
+            int y = id % width;
+            for(int i = 0; i < 8; i++)
+            {
+                int cx = x + dir[i][0];
+                int cy = y + dir[i][1];
+                if(!CHECKWH(cx, cy)) continue;
+                if(color[cx*width+cy] == 0) continue;
+                double w = i >= 4 ? sqrt(2.0) : 1;
+                if(dcmp(dist[cx*width+cy]-dist[id]-w) > 0)
+                {
+                    dist[cx*width+cy] = dist[id] + w;
+                    q.push(PDI(dist[cx*width+cy], cx*width+cy));
+                }
+            }
+        }
+        return -1;
+    }
+
+    ///连接中位点
+    void dfsMedial(int x, int y, int id)
+    {
+        vis[x*width+y] = 1;
+        midSeg[id].push_back(x*width+y);
+        for(int i = 0; i < 8; i++)
+        {
+            int cx = x + dir[i][0];
+            int cy = y + dir[i][1];
+            if(!CHECKWH(cx, cy) || vis[cx*width+cy] || medial[cx*width+cy] == 0) continue;
+            vis[cx*width+cy] = 1;
+            dfsMedial(cx, cy, id);
+            break;
+        }
+    }
+    bool checkp(double p)
+    {
+        srand(time(0));
+        int cur = rand()%10000+1;
+        return cur<p*10000;
+    }
+    void extendPoint(int px, int py, int x, int y, double limit = 0)
+    {
+        double p = 0.5;
+        while(true)
+        {
+            double md = -1;
+            int idx = -1, idy;
+            int cnt = 0;
+            for(int i = 0; i < 8; i++)
+            {
+                int cx = x+dir[i][0];
+                int cy = y+dir[i][1];
+                if(!CHECKWH(cx, cy)) continue;
+                cnt += medial[cx*width+cy];
+                if(medial[cx*width+cy] == 1 || color[cx*width+cy] == 0) continue;
+                if(Angle(Vector(px, py)-Vector(x, y), Vector(cx, cy)-Vector(x, y)) <= PI/2) continue;
+                if(md < dist[cx*width+cy])
+                {
+                    md = dist[cx*width+cy];
+                    idx = cx, idy = cy;
+                }
+            }
+            if(cnt >= 3 && idx == -1 || md < dist[x*width+y]-limit) break;
+            medial[idx*width+idy] = 1;
+            px = x, py = y;
+            x = idx, y = idy;
+        }
+    }
+    void linkMedial()
+    {
+        memset(vis, 0, sizeof(bool)*height*width);
+        midSeg.clear();
+        int st = 0;
+        for(int i = height-1; i >= 0; i--)
+        {
+            for(int j = 0; j < width; j++)
+            {
+                if(medial[i*width+j] && vis[i*width+j] == 0)
+                {
+                    midSeg.push_back(vector<int>());
+                    dfsMedial(i, j, st++);
+                }
+            }
+        }
+        for(int i = 0; i < midSeg.size(); i++)
+        {
+            int sz = midSeg[i].size();
+            if(midSeg[i].size() < 2) continue;
+            int x = -1, y, px = -1, py;
+//            x = midSeg[i][0]/width, y = midSeg[i][0]%width;
+//            px = midSeg[i][1]/width, py = midSeg[i][1]%width;
+            int cnt = 0;
+            double limit = INF;
+            for(int j = 0; j < sz; j++) {
+                if(dist[midSeg[i][j]] < penWidth*1.0/4){
+                    medial[midSeg[i][j]] = 0;
+                    continue;
+                }
+                if(x == -1) x = midSeg[i][j]/width, y = midSeg[i][j]%width;
+                else if(px == -1) px = midSeg[i][1]/width, py = midSeg[i][1]%width;
+                cnt++;
+                limit = min(limit, dist[midSeg[i][j]]);
+            }
+            if(cnt < 2) continue;
+//            extendPoint(px, py, x, y, limit-penWidth/10);
+            extendPoint(px, py, x, y);
+            x = midSeg[i][sz-1]/width, y = midSeg[i][sz-1]%width;
+            px = midSeg[i][sz-2]/width, py = midSeg[i][sz-2]%width;
+//            extendPoint(px, py, x, y, limit-penWidth/10);
+            extendPoint(px, py, x, y);
+        }
+    }
+
+
     ///这里死循环了，记得来debug --- 已修复
     vector<int> linkTwoPoint(int sx, int sy, int ex, int ey)
     {
@@ -496,7 +709,7 @@ public:
     }
     void linkOneMidSeg(vector<int>& seg)
     {
-        int len = 4;
+        int len = 5;
         for(int i = 1; i < seg.size(); i++)
         {
             int pid = seg[i-1], cid = seg[i];
@@ -505,21 +718,32 @@ public:
             int cx = cid / width, cy = cid % width;
             if(max(abs(px-cx), abs(cy-py)) > 1)
             {
-                Point pre;
+                Point pre, suf;
+                int pc = 0, sc = 0;
                 for(int j = max(0, i-1-len); j < i-1; j++)
                 {
+                    pc++;
                     int sx = midPoint[seg[j]]/width, sy = midPoint[seg[j]]%width;
                     pre = pre + Vector(sx-px, sy-py);
                 }
-                //将两个点用直线连接起来。
-                if(i == 1 || Angle(pre, Vector(cx-px, cy-py)) > 120.0/180*PI)
+                for(int j = i+1; j < min((int)seg.size(), i+len); j++)
                 {
-                    vector<int> pt = DDA_DrawLine(px, py, cx, cy);
+                    sc++;
+                    int sx = midPoint[seg[j]]/width, sy = midPoint[seg[j]]%width;
+                    suf = suf + Vector(sx-cx, sy-cy);
+                }
+                //将两个点用直线连接起来。
+                if(pc < 3 || Angle(pre, Vector(cx-px, cy-py)) > 160.0/180*PI)
+                {
 //                    vector<int> pt = linkTwoPoint(px, py, cx, cy);
-                    //seg.insert(seg.begin()+i, pt.begin(), pt.end());
-                    for(int j = 0; j < pt.size(); j++)
+                    if(sc < 3 || Angle(suf, Vector(px-cx, py-cy)) > 160.0/180*PI)
                     {
-                        medial[pt[j]] = 1;
+                        vector<int> pt = DDA_DrawLine(px, py, cx, cy);
+                        for(int j = 0; j < pt.size(); j++)
+                        {
+                            if(medial[pt[j]] == 1) continue;
+                            medial[pt[j]] = 1;
+                        }
                     }
                 }
             }
@@ -556,25 +780,70 @@ public:
                 medial[midPoint[cid]] = 0;
             }
         }
-        for(int i = 0; i < seg.size(); i++)
-        {
-            int cid = seg[i];
-            if(medial[midPoint[cid]] == 0)
-            {
-                seg.erase(seg.begin()+i);
-                i--;
-            }
-        }
+//        for(int i = 0; i < seg.size(); i++)
+//        {
+//            int cid = seg[i];
+//            if(medial[midPoint[cid]] == 0)
+//            {
+//                seg.erase(seg.begin()+i);
+//                i--;
+//            }
+//        }
     }
     void clearMid()
     {
-        cout<<midSeg.size()<<endl;
-        for(int i = 0; i < midSeg.size(); i++)
+        vector<vector<double> > data;
+        vector<double> tmp(2);
+        for(int i = 0; i < height; i++)
         {
-            if(midSeg[i].empty()) continue;
-            linkOneMidSeg(midSeg[i]);
-            clearOneMidSeg(midSeg[i]);
+            for(int j = 0; j < width; j++)
+            {
+                if(medial[i*width+j] == 1)
+                {
+//                    tmp[0] = i, tmp[1] = j;
+                    tmp[0] = 0, tmp[1] = dist[i*width+j];
+//                    cerr<<tmp[1]<<endl;
+                    data.push_back(tmp);
+                }
+            }
         }
+        cerr<<"data.size() -> "<<data.size()<<endl;
+        cerr<<"penWidth -> "<<penWidth<<endl;
+        KMEANS<double> ks(8);
+        ks.loadDataSet(data);
+        ks.randCent();
+        ks.kmeans();
+        ks.print("F:/res.txt");
+        int cnt = 0;
+        //DEBUG(penWidth);
+        int clearnum = 0;
+        for(int i = 0; i < height*width; i++)
+        {
+            if(medial[i] == 1)
+            {
+//                cerr<<ks.getCent(cnt).at(1)<<endl;
+                if(ks.getCent(cnt).at(1) < penWidth*1.0/4)
+                    medial[i] = 0, clearnum++;
+                cnt++;
+            }
+        }
+        cerr<<"clear number -> "<<clearnum<<endl;
+//        for(int i = 0; i < midSeg.size(); i++)
+//        {
+//            if(midSeg[i].empty()) continue;
+//            vector<int> tse;
+//            for(int j = 0; j < midSeg[i].size(); j++)
+//            {
+//                int pid = midPoint[midSeg[i][j]];
+//                if(medial[pid] == 0) continue;
+//                tse.push_back(midSeg[i][j]);
+//            }
+//            midSeg[i].clear();
+//            for(int j = 0; j < tse.size(); j++)
+//                midSeg[i].push_back(tse[j]);
+//            linkOneMidSeg(midSeg[i]);
+//            clearOneMidSeg(midSeg[i]);
+//        }
     }
 };
 
